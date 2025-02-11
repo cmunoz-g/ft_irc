@@ -42,6 +42,7 @@ public:
     void        setUsername(const std::string& username);
     void        setAuthenticated(bool status);
     void        setCapNegotiationStatus(bool status);
+    void        setBuffer(const std::string& buffer);
 
     // Buffer para mensajes parciales
     void        appendToBuffer(const std::string& data);

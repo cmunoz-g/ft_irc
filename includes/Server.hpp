@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2024/12/22 19:00:50 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/11 09:56:40 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ public:
     void handleModeCommand(Message &message);
     void handlePingCommand(Message &message);
     void handlePassCommand(Message &message);
+    void handleUserCommand(Message &message);
     
 };
 

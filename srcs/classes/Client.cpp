@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2024/12/14 18:39:29 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/11 09:42:23 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,9 @@ void		Client::setCapNegotiationStatus(bool status) {
 	_capNegotiation = status;
 }
 
+void		Client::setBuffer(const std::string &buffer) {
+	_buffer = buffer;
+}
 //
 
 void	Client::appendToBuffer(const std::string& data)

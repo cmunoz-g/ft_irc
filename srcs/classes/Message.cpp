@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 12:07:15 by cmunoz-g          #+#    #+#             */
-/*   Updated: 2024/12/22 18:32:24 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/11 09:58:21 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,4 +127,16 @@ void    Message::setCommandType(void) {
     else {
         _commandType = IRC::CMD_UNKNOWN;
     }
+}
+
+void    Message::printMessageDebug(void) {
+    std::cout << "type :" << _commandType << std::endl;
+	std::cout << "command :" << this->getCommand() << std::endl; 
+	std::cout << "prefix :" << this->getPrefix() << std::endl; 
+    const std::vector<std::string> params = this->getParams();
+	int i = 1;
+	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it) {
+        std::cout << "param" << i << ":" << *it << std::endl; 
+        i++;
+	}
 }

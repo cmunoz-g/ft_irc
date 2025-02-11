@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2024/12/22 19:53:45 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/11 10:12:07 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,35 +119,45 @@ void Server::handleClientMessage(struct pollfd& pfd) {
         buffer[bytes_read] = '\0';
 		unsigned int client_id = fetchClientIdFromPid(pfd.fd);
 		if (client_id > 0) {
-			_clients[client_id]->appendToBuffer(buffer);
-			if (_clients[client_id]->getBuffer().substr(_clients[client_id]->getBuffer().size() - 2) == "\r\n") {
-				// TODO: Update to construct Message from Client, so we store: sender (client socket) 
-				// and receiver (channel name)
-				Message newMessage(_clients[client_id]);
-				_clients[client_id]->clearBuffer();
-				// Muy tocho, poner bonito.
-				switch (newMessage.getCommandType()) // De momento la gestion de comandos se va a hacer con metodos dentro de Server. Si la clase Server se vuelve
-				// demasiado compleja, se puede modularizar esta gestion.
-				{
+			Client *client = _clients[client_id];
+			
+			client->appendToBuffer(buffer);
+			std::string buf = client->getBuffer();
+			size_t pos;
+			
+			while ((pos = buf.find("\r\n")) != std::string::npos) {
+				std::string singleCommand = buf.substr(0, pos);
+				buf.erase(0, pos + 2);
+				
+				client->setBuffer(singleCommand);
+				
+				Message newMessage(client);
+				
+				switch (newMessage.getCommandType()) {
 					case IRC::CMD_CAP:
 						handleCapCommand(newMessage);
 						break;
 					case IRC::CMD_NICK:
+						std::cout << "sending nick cmd" << std::endl;
 						handleNickCommand(newMessage);
 						break;
 					case IRC::CMD_USER:
-						std::cout << "sending user";
+						handleUserCommand(newMessage);
 						break;
-					case IRC::CMD_PASS: // hay que revisar si tenemos que pedirle a irssi que mande PASS explicitamente
+					case IRC::CMD_PASS:
 						handlePassCommand(newMessage);
 						break;
 					case IRC::CMD_PRIVMSG:
+						// handlePrivmsgCommand(newMessage);
 						break;
 					case IRC::CMD_JOIN:
+						// handleJoinCommand(newMessage);
 						break;
 					case IRC::CMD_INVITE:
+						// handleInviteCommand(newMessage);
 						break;
 					case IRC::CMD_TOPIC:
+						// handleTopicCommand(newMessage);
 						break;
 					case IRC::CMD_MODE:
 						handleModeCommand(newMessage);
@@ -156,28 +166,16 @@ void Server::handleClientMessage(struct pollfd& pfd) {
 						handlePingCommand(newMessage);
 						break;
 					case IRC::CMD_KICK:
+						// handleKickCommand(newMessage);
 						break;
 					case IRC::CMD_QUIT:
+						// handleQuitCommand(newMessage);
 						break;
 					default:
 						break;
-					
 				}
-
-				// Algo raro, cuando comento/descomento esto de abajo cambian cosas, i.e. el servidor recibe o no recibe los comandos. weird
-
-				std::cout << newMessage.getCommandType() << std::endl;
-				std::cout << "command :" << newMessage.getCommand() << std::endl; 
-				std::cout << "prefix :" << newMessage.getPrefix() << std::endl; 
-				const std::vector<std::string> params = newMessage.getParams();
-				int i = 1;
-				for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it) {
-					std::cout << "param" << i << ":" << *it << std::endl; 
-					i++;
-				}
-
-				std::cout << "" << std::endl;
 			}
+			client->setBuffer(buf);
 		}
 }
 
@@ -211,11 +209,9 @@ void Server::handleCapCommand(Message &message) {
 
 void Server::handleNickCommand(Message &message) { // llega un unico param que es el nick
 	std::string nickname = message.getParams()[0];
-	// check if its unique, if so:
 	if (checkUniqueNick(nickname)) {
 		_clients[message.getSenderId()]->setNickname(nickname);
-		//std::string response = ":" + SERVER_NAME + " 001 " + nickname + "\r\n";
-		//_clients[message.getSenderId()]->receiveMessage(response);
+		std::cout << "NICK command handled, nickname saved as " << _clients[message.getSenderId()]->getNickname() << std::endl;
 	} 
 	else {
 		std::string response = ":" + SERVER_NAME + " 433 " + nickname + " :Nickname is already in use\r\n";
@@ -256,6 +252,17 @@ void Server::handlePassCommand(Message &message) {
 	else {
 		_clients[message.getSenderId()]->setAuthenticated(true);
 		std::cout << "Pass command handled, client authenticated" << std::endl;
+	}
+}
+
+void Server::handleUserCommand(Message &message) {
+	Client *client = _clients[message.getSenderId()];
+	client->setUsername(message.getParams()[0]);
+	std::cout << "User command handled, username saved as " << client->getUsername() << std::endl;
+
+	if (!client->getNickname().empty() && !client->getUsername().empty() && client->isAuthenticated()) {
+		std::string response = ":" + SERVER_NAME + " 001 " + client->getNickname() + "\r\n";
+		client->receiveMessage(response);
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 12:01:43 by cmunoz-g          #+#    #+#             */
-/*   Updated: 2024/12/14 18:12:06 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/11 09:56:57 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,10 +50,10 @@ public:
 	int						getSenderSocket() const;
 	unsigned int			getSenderId() const;
 	std::string				getReceiverChannel() const;
-	
+
+	void	printMessageDebug();
 	
 	static void    initCommandMap(void);
-
 };
 
 #endif
