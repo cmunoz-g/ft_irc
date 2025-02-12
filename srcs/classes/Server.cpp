@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/11 10:12:07 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/12 10:24:35 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,13 +132,13 @@ void Server::handleClientMessage(struct pollfd& pfd) {
 				client->setBuffer(singleCommand);
 				
 				Message newMessage(client);
+				newMessage.printMessageDebug();
 				
 				switch (newMessage.getCommandType()) {
 					case IRC::CMD_CAP:
 						handleCapCommand(newMessage);
 						break;
 					case IRC::CMD_NICK:
-						std::cout << "sending nick cmd" << std::endl;
 						handleNickCommand(newMessage);
 						break;
 					case IRC::CMD_USER:
@@ -151,7 +151,7 @@ void Server::handleClientMessage(struct pollfd& pfd) {
 						// handlePrivmsgCommand(newMessage);
 						break;
 					case IRC::CMD_JOIN:
-						// handleJoinCommand(newMessage);
+						handleJoinCommand(newMessage);
 						break;
 					case IRC::CMD_INVITE:
 						// handleInviteCommand(newMessage);
@@ -195,7 +195,7 @@ void Server::handleCapCommand(Message &message) {
 	}
 	else {
 		// checkear
-	}
+	} 
 }
 
 /* 
@@ -220,7 +220,7 @@ void Server::handleNickCommand(Message &message) { // llega un unico param que e
 
 void Server::handleModeCommand(Message &message) {
 	std::string nickname = _clients[message.getSenderId()]->getNickname();
-	std::string response = ":" + nickname + " MODE " + nickname + " +i\r\n";
+	std::string response = ":" + nickname + " MODE " + nickname + " +i\r\n"; // +i es el modo invisible que el cliente pide al servidor, mirar si hay que implementarlo en el servidor
 	_clients[message.getSenderId()]->receiveMessage(response);
 }
 
@@ -230,7 +230,7 @@ void Server::handlePingCommand(Message &message) {
 		token = token.substr(1);
 	}
 
-	std::string response = " PONG " + SERVER_NAME + "\r\n";
+	std::string response = "PONG :" + token + "\r\n";
 	_clients[message.getSenderId()]->receiveMessage(response);
 }
 
@@ -263,6 +263,64 @@ void Server::handleUserCommand(Message &message) {
 	if (!client->getNickname().empty() && !client->getUsername().empty() && client->isAuthenticated()) {
 		std::string response = ":" + SERVER_NAME + " 001 " + client->getNickname() + "\r\n";
 		client->receiveMessage(response);
+	}
+}
+
+void Server::handleJoinCommand(Message &message) { // revisar el join a varios canales simultaneamente
+	if (message.getParams()[0].empty()) // para gestionar el autojoin de irssi
+		return;
+	std::string channelName = message.getParams()[0];
+	Client *client = _clients[message.getSenderId()];
+	
+	if (_channels.find(channelName) == _channels.end()) { // if channel doesn't exist, we create it
+		_channels[channelName] = new Channel(channelName, client);
+		if (message.getParams().size() > 1) {
+			_channels[channelName]->setPassword(message.getParams()[1]);
+			_channels[channelName]->setMode(IRC::MODE_K, true);
+		}
+		std::string topic_response = ":" + SERVER_NAME + " 331 " + client->getNickname() + " " + channelName + " :No topic is set\r\n";
+		client->receiveMessage(topic_response);
+		_channels[channelName]->sendNames(client);
+		std::string mode_response = ":" + SERVER_NAME + " 324 " + client->getNickname() + " " + channelName + " +o" + "\r\n";
+		client->receiveMessage(mode_response);
+
+		_channels[channelName]->addClient(client);
+		_channels[channelName]->addOperator(client);
+	}
+	
+	else {
+		Channel *channel = _channels[channelName];
+		if (channel->hasClient(client)) {
+			std::string response = ":" + SERVER_NAME + " 443 " + client->getNickname() + " " + channelName + " :is already on channel\r\n";
+			client->receiveMessage(response);
+			return;
+		}
+		if (channel->hasMode(IRC::MODE_I)) { // && !channel->isInvited(client) GESTIONAR INVITACIONES
+			std::string response = ":" + SERVER_NAME + " 473 " + client->getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
+			client->receiveMessage(response);
+			return;
+		}
+		if (message.getParams().size() > 1 && channel->hasMode(IRC::MODE_K) && channel->getPassword() != message.getParams()[1]) { // y si no tiene contrasena el canal y el cliente pone una?
+			std::string response = ":" + SERVER_NAME + " 475 " + client->getNickname() + " " + channelName + " :Cannot join channel (+k)\r\n";
+			client->receiveMessage(response);
+			return;
+		}
+		if (channel->addClient(client) == false) {
+			std::string response = ":" + SERVER_NAME + " 471 " + client->getNickname() + " " + channelName + " :Cannot join channel (+l)\r\n";
+			client->receiveMessage(response);
+			return;
+		}
+		std::string response = ":" + client->getNickname() + " JOIN " + channelName + "\r\n";
+		client->receiveMessage(response);
+		std::string topic_response;
+		if (channel->hasMode(IRC::MODE_T))
+			topic_response = ":" + SERVER_NAME + " 332 " + client->getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+		else
+			topic_response = ":" + SERVER_NAME + " 331 " + client->getNickname() + " " + channelName + " :No topic is set\r\n";
+		client->receiveMessage(topic_response);
+		channel->sendNames(client);
+		channel->addClient(client);
+		channel->broadcastMessage(":" + client->getNickname() + " JOIN " + channelName + "\r\n", client);
 	}
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: juramos <juramos@student.42madrid.com>     +#+  +:+       +#+        */
+/*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2024/11/29 11:41:34 by juramos          ###   ########.fr       */
+/*   Updated: 2025/02/12 10:16:34 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,22 +29,23 @@ private:
     std::map<unsigned int, Client*> _clients;      // Clientes en el canal
     std::map<unsigned int, Client*> _operators;    // Operadores (true) y usuarios normales (false)
     size_t _userLimit;                         // Límite de usuarios (para modo l)
-    Channel(const Channel& other);
-    Channel& operator=(const Channel& other);
     Channel(void);
     // Métodos auxiliares
     bool canModifyTopic(Client* client) const;
     bool isInviteOnly() const;
     void notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param = "");
-
-public:
+    
+    public:
     // Constructor y destructor
     Channel(const std::string& name, Client* creator);
     ~Channel();
+    Channel(const Channel& other);
+    Channel& operator=(const Channel& other);
 
     // Getters básicos
     const std::string& getName() const;
     const std::string& getTopic() const;
+    const std::string& getPassword() const;
     size_t getUserCount() const;
     size_t getUserLimit() const;
     bool isOperator(Client* client) const;
@@ -60,7 +61,7 @@ public:
     bool setTopic(Client* client, const std::string& newTopic);
     
     // Manejo de usuarios
-    bool addClient(Client* client, const std::string& password = "");
+    bool addClient(Client* client);
     bool removeClient(Client* client);
     bool hasClient(Client* client) const;
     

@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2024/12/22 19:01:49 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/12 10:28:46 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,11 @@
 
 // to do
 /*
+    gestionar channels:
+        -- seguir testeando desde irssi para conseguir un comportamiento correcto
+
+    quit command
+
     si irssi se conecta sin contraseña, gestionar error
 
 */

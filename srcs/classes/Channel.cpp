@@ -6,13 +6,13 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/11 08:08:50 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/12 10:26:51 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
-Channel::Channel(const std::string& name, Client* creator) : _name(name), _userLimit(0) { // Cambio getSocket() por getId(), expliación en Server.hpp
+Channel::Channel(const std::string& name, Client* creator) : _name(name), _password(""), _userLimit(0) { // Cambio getSocket() por getId(), expliación en Server.hpp
     _clients.insert(std::make_pair(creator->getId(), creator));
     _operators.insert(std::make_pair(creator->getId(), creator));
 }
@@ -28,6 +28,10 @@ const std::string& Channel::getTopic() const {
     return _topic;
 }
 
+const std::string& Channel::getPassword() const {
+    return _password;
+}
+
 size_t Channel::getUserCount() const {
     return _clients.size();
 }
@@ -35,6 +39,7 @@ size_t Channel::getUserCount() const {
 size_t Channel::getUserLimit() const {
     return _userLimit;
 }
+
 
 bool Channel::isOperator(Client* client) const {
     std::map<unsigned int, Client*>::const_iterator it = _operators.find(client->getId());
@@ -74,11 +79,9 @@ bool Channel::setTopic(Client* client, const std::string& newTopic) {
     return true;
 }
 
-bool Channel::addClient(Client* client, const std::string& password) {
-    if (getUserCount() >= getUserLimit() || 
-        (hasMode(IRC::MODE_K) && !checkPassword(password))) {
+bool Channel::addClient(Client* client) {
+    if (getUserCount() >= getUserLimit())
         return false;
-    }
     _clients.insert(std::make_pair(client->getId(), client));
     return true;
 }
@@ -150,20 +153,13 @@ void Channel::sendNames(Client* client) const {
     }
 
     std::string serverReply;
-    serverReply = ":";
-    serverReply += SERVER_NAME;
-    serverReply += " 353 ";
-    serverReply += client->getNickname();
-    serverReply += " = ";
-    serverReply += _name;
-    serverReply += " :";
-    serverReply += namesList;
-    client->sendMessage(serverReply);
+    serverReply = ":" + SERVER_NAME + " 353 " + client->getNickname() + " = " + _name + " :" + namesList + "\r\n";
+    client->receiveMessage(serverReply);
 
     std::string endReply = ":" + SERVER_NAME + " 366 " + 
                           client->getNickname() + " " + 
-                          _name + " :End of /NAMES list";
-    client->sendMessage(endReply);
+                          _name + " :End of /NAMES list" + "\r\n";
+    client->receiveMessage(endReply);
 }
 
 bool Channel::canModifyTopic(Client* client) const {
