@@ -6,13 +6,13 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/12 10:26:51 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/24 11:07:58 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
-Channel::Channel(const std::string& name, Client* creator) : _name(name), _password(""), _userLimit(0) { // Cambio getSocket() por getId(), expliación en Server.hpp
+Channel::Channel(const std::string& name, Client* creator) : _name(name), _topic(""), _password(""), _userLimit(0) {
     _clients.insert(std::make_pair(creator->getId(), creator));
     _operators.insert(std::make_pair(creator->getId(), creator));
 }
@@ -99,6 +99,23 @@ bool Channel::hasClient(Client* client) const {
     return _clients.find(client->getId()) != _clients.end();
 }
 
+void Channel::addInvitedClient(Client* client) { // Cambiar a bool ? No se si lo necesito
+    _invitedClients.insert(std::make_pair(client->getId(), client));
+}
+
+bool Channel::isInvitedClient(Client* client) const {
+    return _invitedClients.find(client->getId()) != _invitedClients.end();
+}
+
+bool Channel::removeInvitedClient(Client *client) {
+    std::map<unsigned int, Client*>::iterator it = _invitedClients.find(client->getId());
+    if (it != _invitedClients.end()) {
+        _invitedClients.erase(it);
+        return true;
+    }
+    return false;
+}
+
 bool Channel::addOperator(Client* client) {
     if (getUserCount() >= getUserLimit()) {
         return false;
@@ -137,7 +154,7 @@ void Channel::broadcastMessage(const std::string& message, Client* exclude) {
     std::map<unsigned int, Client*>::iterator it;
     for (it = _clients.begin(); it != _clients.end(); ++it) {
         if (it->second != exclude) {
-            it->second->sendMessage(message);
+            it->second->receiveMessage(message);
         }
     }
 }

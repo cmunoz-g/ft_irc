@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/12 10:28:46 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/24 12:06:17 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,14 @@
 
 // to do
 /*
-    gestionar channels:
-        -- seguir testeando desde irssi para conseguir un comportamiento correcto
 
-    quit command
-
-    si irssi se conecta sin contraseña, gestionar error
+    - limpiar el codigo, anadir casos limites y tests (ie: arreglar MODE, join a varios canales, si irssi se conecta sin contraseña
+        gestionar error, anadir ft helpers (por ejemplo para comprobar si un channel existe), organizar fts y ver si quiero
+        separarlas en diferentes archivos)
+    - testear con varios clientes a la vez
+        - KICK, INVITE, ETC...
+    - revisar tutoriales, otros repos
+    - testeos intensivos, pulir, revisar errores
 
 */
 

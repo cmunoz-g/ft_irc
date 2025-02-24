@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/11 09:42:23 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/24 12:00:45 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,6 @@ void	Client::leaveChannel(const Channel *channel) {
 		++it;
 		
 	_channels.erase(it);
-	//channel.removeClient(it);
 	
 	if (isOperator(channel))
 		removeOperatorStatus(channel);
@@ -153,7 +152,6 @@ void	Client::removeOperatorStatus(const Channel *channel) {
 	while (it->second->getName() != channel->getName())
 		++it;
 	
-	//channel.removeOperator(it->second);
 	_op_channels.erase(it);
 }
 
@@ -195,9 +193,11 @@ void	Client::cleanup() {
 	_channels.clear();
 
 	for (std::map<const std::string, Channel*>::const_iterator it = _op_channels.begin(); it != _op_channels.end(); ++it) {
-		it->second->removeClient(this);
+		it->second->removeOperator(this);
 	}
 	_op_channels.clear();
+	close(_socket);
+	_socket = -1;
 }
 
 bool	Client::operator==(Client &other) {

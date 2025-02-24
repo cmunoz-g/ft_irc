@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/12 10:16:34 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/20 12:20:39 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,14 @@ class Client;
 
 class Channel {
 private:
-    std::string _name;                         // Nombre del canal
-    std::string _topic;                        // Topic del canal
-    std::string _password;                     // Password (para modo k)
-    std::vector<unsigned int> _modes;          // Modos activos (usando ChannelMode)
-    std::map<unsigned int, Client*> _clients;      // Clientes en el canal
-    std::map<unsigned int, Client*> _operators;    // Operadores (true) y usuarios normales (false)
-    size_t _userLimit;                         // Límite de usuarios (para modo l)
+    std::string _name;                                  // Nombre del canal
+    std::string _topic;                                 // Topic del canal
+    std::string _password;                              // Password (para modo k)
+    std::vector<unsigned int> _modes;                   // Modos activos (usando ChannelMode)
+    std::map<unsigned int, Client*> _clients;           // Clientes en el canal
+    std::map<unsigned int, Client*> _operators;         // Operadores (true) y usuarios normales (false)
+    std::map<unsigned int, Client*> _invitedClients;    // Clientes invitados
+    size_t _userLimit;                                  // Límite de usuarios (para modo l)
     Channel(void);
     // Métodos auxiliares
     bool canModifyTopic(Client* client) const;
@@ -65,6 +66,11 @@ private:
     bool removeClient(Client* client);
     bool hasClient(Client* client) const;
     
+    // Manejo de invitados
+    void addInvitedClient(Client* client);
+    bool isInvitedClient(Client* client) const;
+    bool removeInvitedClient(Client *client);
+
     // Manejo de operadores
     bool addOperator(Client* client);
     bool removeOperator(Client* client);

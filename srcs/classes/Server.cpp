@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/12 10:24:35 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/24 12:05:27 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,16 +148,16 @@ void Server::handleClientMessage(struct pollfd& pfd) {
 						handlePassCommand(newMessage);
 						break;
 					case IRC::CMD_PRIVMSG:
-						// handlePrivmsgCommand(newMessage);
+						handlePrivmsgCommand(newMessage);
 						break;
 					case IRC::CMD_JOIN:
 						handleJoinCommand(newMessage);
 						break;
 					case IRC::CMD_INVITE:
-						// handleInviteCommand(newMessage);
+						handleInviteCommand(newMessage);
 						break;
 					case IRC::CMD_TOPIC:
-						// handleTopicCommand(newMessage);
+						handleTopicCommand(newMessage);
 						break;
 					case IRC::CMD_MODE:
 						handleModeCommand(newMessage);
@@ -166,7 +166,7 @@ void Server::handleClientMessage(struct pollfd& pfd) {
 						handlePingCommand(newMessage);
 						break;
 					case IRC::CMD_KICK:
-						// handleKickCommand(newMessage);
+						handleKickCommand(newMessage);
 						break;
 					case IRC::CMD_QUIT:
 						// handleQuitCommand(newMessage);
@@ -220,7 +220,15 @@ void Server::handleNickCommand(Message &message) { // llega un unico param que e
 
 void Server::handleModeCommand(Message &message) {
 	std::string nickname = _clients[message.getSenderId()]->getNickname();
-	std::string response = ":" + nickname + " MODE " + nickname + " +i\r\n"; // +i es el modo invisible que el cliente pide al servidor, mirar si hay que implementarlo en el servidor
+	std::string response;
+
+	if (message.getParams().size() == 1) {
+		std::string channelName = message.getParams()[0];
+		response = ":" + SERVER_NAME + " 324 " + nickname + " " + channelName.erase(0, 1) + " +o" + "\r\n"; // hay que adaptar esto para enviar los modos concretos que tenga el canal
+	}
+	else {
+		response = ":" + nickname + " MODE " + nickname + " +i\r\n"; // +i es el modo invisible que el cliente pide al servidor, mirar si hay que implementarlo en el servidor
+	}
 	_clients[message.getSenderId()]->receiveMessage(response);
 }
 
@@ -324,7 +332,226 @@ void Server::handleJoinCommand(Message &message) { // revisar el join a varios c
 	}
 }
 
-// checks
+void Server::handlePrivmsgCommand(Message &message) {
+	Client *sender = _clients[message.getSenderId()];
+
+	if (message.getParams().empty()) {
+		std::string response = ":" + SERVER_NAME + " 411 " + sender->getNickname() + " :No recipient given (PRIVMSG)\r\n";
+		sender->receiveMessage(response);
+		return;
+	}
+
+	if (message.getParams().size() < 2 || message.getParams()[1].empty()) {
+		std::string response = ":" + SERVER_NAME + " 412 " + sender->getNickname() + " :No text to send\r\n";
+		sender->receiveMessage(response);
+		return;
+	}
+
+	std::string target = message.getParams()[0];
+    std::string msg = message.getParams()[1];
+
+	if (target[0] == '#') { // Target is a channel
+		if (_channels.find(target) == _channels.end()) {
+			std::string response = ":" + SERVER_NAME + " 403 " + sender->getNickname() + " " + target + " :No such channel\r\n";
+			sender->receiveMessage(response);
+			return;
+		}
+		Channel *channel = _channels[target];
+		if (!channel->hasClient(sender)) {
+			std::string response = ":" + SERVER_NAME + " 404 " + sender->getNickname() + " " + target + " :Cannot send to channel\r\n";
+			sender->receiveMessage(response);
+			return;
+		}
+		channel->broadcastMessage(":" + sender->getNickname() + " PRIVMSG " + target + " :" + msg + "\r\n", sender);
+	}
+	else { // Target is a user
+		std::map<unsigned int, Client*>::iterator it = _clients.begin();
+		while (it != _clients.end()) {
+			if (it->second->getNickname() == target) {
+				it->second->receiveMessage(":" + sender->getNickname() + " PRIVMSG " + target + " :" + msg + "\r\n");
+				return;
+			}
+			++it;
+		}
+		std::string response = ":" + SERVER_NAME + " 401 " + sender->getNickname() + " " + target + " :No such nick\r\n";
+		sender->receiveMessage(response);
+
+	}
+}
+
+void Server::handleInviteCommand(Message &message) {
+	Client *inviter = _clients[message.getSenderId()];
+	
+	if (message.getParams().size() < 2) {
+		std::string response = ":" + SERVER_NAME + " 461 " + inviter->getNickname() + " INVITE :Not enough parameters\r\n"; // Revisar si es el comando correcto
+		inviter->receiveMessage(response);
+		return;
+	}
+
+	std::string nickname = message.getParams()[0];
+	std::string channelName = message.getParams()[1];
+
+	if (_channels.find(channelName) == _channels.end()) {
+		std::string response = ":" + SERVER_NAME + " 403 " + inviter->getNickname() + " " + channelName + " :No such channel\r\n";
+	}
+
+	Channel *channel = _channels[channelName];
+	if (!channel->hasClient(inviter)) {
+		std::string response = ":" + SERVER_NAME + " 442 " + inviter->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+		return;
+	}
+	
+	Client *invitee = NULL;
+	std::map<unsigned int, Client*>::iterator it = _clients.begin();
+	while (it != _clients.end()) {
+		if (it->second->getNickname() == nickname) {
+			invitee = it->second;
+			break;
+		}
+		++it;
+	}
+	
+	if (!invitee) {
+		std::string response = ":" + SERVER_NAME + " 401 " + inviter->getNickname() + " " + nickname + " :No such nick\r\n";
+		inviter->receiveMessage(response);
+		return;
+	}
+
+	if (channel->hasMode(IRC::MODE_I) && !channel->isOperator(inviter)) {
+		std::string response = ":" + SERVER_NAME + " 482 " + inviter->getNickname() + " " + channelName + " :You're not channel operator\r\n";
+		inviter->receiveMessage(response);
+		return;
+	}
+
+	std::string inviteResponse = ":" + inviter->getNickname() + " INVITE " + nickname + " :" + channelName + "\r\n";
+	invitee->receiveMessage(inviteResponse);
+
+	std::string inviterResponse = ":" + SERVER_NAME + " 341 " + inviter->getNickname() + " " + nickname + " " + channelName + "\r\n";
+	inviter->receiveMessage(inviterResponse);
+	
+	channel->addInvitedClient(invitee);
+}
+
+void Server::handleTopicCommand(Message &message) {
+	Client *client = _clients[message.getSenderId()];
+
+	if (message.getParams().empty()) {
+		std::string response = ":" + SERVER_NAME + " 461 TOPIC :Not enough parameters\r\n";
+		client->receiveMessage(response);
+		return;
+	}
+	
+	std::string channelName = message.getParams()[0];
+
+	if (_channels.find(channelName) == _channels.end()) {
+		std::string response = ":" + SERVER_NAME + " 403 " + channelName + " :No such channel\r\n";
+		client->receiveMessage(response);
+		return;
+	}
+	
+	Channel *channel = _channels[channelName];
+	if (message.getParams().size() == 1) { // VIEW Topic: Checks current topic
+		if (channel->getTopic().empty()) {
+			std::string response = ":" + SERVER_NAME + " 331 " + client->getNickname() + " " + channelName + " :No topic is set\r\n";
+			client->receiveMessage(response);
+		}
+		else {
+			std::string response = ":" + SERVER_NAME + " 332 " + client->getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+			client->receiveMessage(response);
+		}
+		return;
+	}
+
+	std::string newTopic = message.getParams()[1];
+	
+	if (!channel->setTopic(client, newTopic)) {
+		std::string response = ":" + SERVER_NAME + " 482 " + client->getNickname() + " " + channelName + " :You're not channel operator\r\n";
+		return;
+	}
+
+	std::string topic_response = ":" + client->getNickname() + "!" + client->getUsername() + "@" + SERVER_NAME + " TOPIC " + channelName + " :" + newTopic + "\r\n";
+	channel->broadcastMessage(topic_response, NULL);
+}
+
+void Server::handleKickCommand(Message &message) {
+	Client *kicker = _clients[message.getSenderId()];
+
+	if (message.getParams().size() < 2) {
+		std::string response = ":" + SERVER_NAME + " 461 KICK :Not enough parameters\r\n";
+		kicker->receiveMessage(response);
+		return;
+	}
+
+	std::string channelName = message.getParams()[0];
+	std::string targetName = message.getParams()[1];
+	std::string reason = (message.getParams().size() > 2) ? message.getParams()[2] : "No reason";
+
+	if (_channels.find(channelName) == _channels.end()) {
+		std::string response = ":" + SERVER_NAME + " 403 " + channelName + " :No such channel\r\n";
+		kicker->receiveMessage(response);
+		return;
+	}
+
+	Channel *channel = _channels[channelName];
+	if (!channel->hasClient(kicker)) {
+		std::string response = ":" + SERVER_NAME + " 442 " + kicker->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+		kicker->receiveMessage(response);
+		return;
+	}
+	if (!channel->isOperator(kicker)) {
+		std::string response = ":" + SERVER_NAME + " 482 " + channelName + " :You're not a channel operator\r\n";
+        kicker->receiveMessage(response);
+        return;
+	}
+
+	Client *target = NULL;
+	std::map<unsigned int, Client*>::iterator it = _clients.begin();
+	while (it != _clients.end()) {
+		if (targetName == it->second->getNickname()) {
+			target = it->second;
+			break;
+		}
+		++it;
+	}
+
+	if (!target) {
+		std::string response = ":" + SERVER_NAME + " 401 " + targetName + " :No such nick\r\n";
+        kicker->receiveMessage(response);
+        return;
+	}
+
+	std::string kickResponse = ":" + kicker->getNickname() + "!" + kicker->getUsername() + "@" + SERVER_NAME + " KICK " + channelName + " " + targetName + " :" + reason + "\r\n";
+	channel->broadcastMessage(kickResponse, NULL);
+	target->leaveChannel(channel);
+	channel->removeClient(target); // Deberia juntar este y el de abajo en uno? o Llamar a remove operator desde remove client creo
+	channel->removeOperator(target);
+	
+	target->receiveMessage(kickResponse);
+}
+
+void Server::handleQuitCommand(Message &message) {
+	Client *client = _clients[message.getSenderId()];
+	std::string reason = (message.getParams().empty()) ? "Client quit" : message.getParams()[0];
+	std::string quitResponse = ":" + client->getNickname() + "!" + client->getUsername() + "@" + SERVER_NAME + " QUIT :" + reason + "\r\n";
+	
+	std::map<const std::string, Channel*>::iterator it = _channels.begin();
+	while (it != _channels.end()) {
+		Channel *channel = it->second;
+		++it;
+		if (channel->hasClient(client)) {
+			channel->broadcastMessage(quitResponse, client);
+			channel->removeClient(client); // De nuevo, juntar estas dos 
+			channel->removeOperator(client); //
+		}
+	}
+
+	client->receiveMessage(quitResponse);
+	client->cleanup();
+	delete client;
+	_clients.erase(message.getSenderId());
+}
+
+/**/
 
 bool Server::checkUniqueNick(std::string nick) { // esto hay que testearlo
 	std::map<unsigned int, Client*>::iterator it = _clients.begin();
