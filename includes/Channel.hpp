@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/20 12:20:39 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/25 12:44:47 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,8 @@ private:
 
     // Manejo de modos (requeridos por el subject)
     void setMode(IRC::ChannelMode mode, bool enabled = true);
+    void setModesFromString(const std::string& modeString, const std::vector<std::string>& params, Client *client);
+    std::string getModes() const;
     bool hasMode(IRC::ChannelMode mode) const;
     void setPassword(const std::string& pass);
     void setUserLimit(size_t limit);
@@ -76,7 +78,7 @@ private:
     bool removeOperator(Client* client);
     
     // Comandos de operador (requeridos por el subject)
-    bool kickClient(Client* operator_client, Client* target, const std::string& reason = "");
+    //bool kickClient(Client* operator_client, Client* target, const std::string& reason = "");
     bool inviteClient(Client* operator_client, Client* target);
 
     // Mensajes

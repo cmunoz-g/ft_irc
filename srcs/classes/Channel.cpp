@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/24 11:07:58 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/25 12:55:15 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,20 @@ size_t Channel::getUserLimit() const {
     return _userLimit;
 }
 
+std::string Channel::getModes() const {
+    std::string modes = "+";
+
+    if (hasMode(IRC::MODE_I))
+        modes += "i";
+    if (hasMode(IRC::MODE_T))
+        modes += "t";
+    if (!_password.empty())
+        modes += "k";
+    if (_userLimit > 0)
+        modes += "l";
+
+    return modes == "+" ? "" : modes;
+}
 
 bool Channel::isOperator(Client* client) const {
     std::map<unsigned int, Client*>::const_iterator it = _operators.find(client->getId());
@@ -54,6 +68,79 @@ void Channel::setMode(IRC::ChannelMode mode, bool enabled) {
         _modes.erase(it);
     }
 }
+
+void Channel::setModesFromString(const std::string& modeString, const std::vector<std::string>& params, Client* client) {
+    bool adding = true;
+    size_t paramIndex = 0;
+
+    for (size_t i = 0; i < modeString.length(); ++i) {
+        char c = modeString[i];
+
+        if (c == '+') {
+            adding = true;
+        } else if (c == '-') {
+            adding = false;
+        } else {
+            IRC::ChannelMode modeEnum = IRC::MODE_NONE; // Default to no mode
+
+            // Mapping the mode character to the ChannelMode enum
+            switch (c) {
+                case 'i':
+                    modeEnum = IRC::MODE_I;
+                    break;
+                case 't':
+                    modeEnum = IRC::MODE_T;
+                    break;
+                case 'k':
+                    modeEnum = IRC::MODE_K;
+                    break;
+                case 'l':
+                    modeEnum = IRC::MODE_L;
+                    break;
+                case 'o':
+                    modeEnum = IRC::MODE_O;
+                    break;
+                default:
+                    break;
+            }
+
+            // Handle adding or removing the mode
+            if (adding) {
+                if (!hasMode(modeEnum)) {
+                    _modes.push_back(modeEnum); // Add mode if not already set
+                }
+
+                // Handle modes that require parameters
+                if (modeEnum == IRC::MODE_K && paramIndex < params.size()) {
+                    _password = params[paramIndex++];
+                } 
+                else if (modeEnum == IRC::MODE_L && paramIndex < params.size()) {
+                    _userLimit = stringToInt(params[paramIndex++]);
+                } 
+                else if (modeEnum == IRC::MODE_O && paramIndex < params.size()) {
+                    addOperator(client); // Add operator
+                }
+            } else { // Removing modes
+                std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), modeEnum);
+                if (it != _modes.end()) {
+                    _modes.erase(it); // Remove mode if present
+                }
+
+                // Handle parameter clearing for specific modes
+                if (modeEnum == IRC::MODE_K) {
+                    _password.clear();
+                } 
+                else if (modeEnum == IRC::MODE_L) {
+                    _userLimit = 0;
+                } 
+                else if (modeEnum == IRC::MODE_O && paramIndex < params.size()) {
+                    removeOperator(client); // Remove operator
+                }
+            }
+        }
+    }
+}
+
 
 bool Channel::hasMode(IRC::ChannelMode mode) const {
     return std::find(_modes.begin(), _modes.end(), mode) != _modes.end();
@@ -92,6 +179,7 @@ bool Channel::removeClient(Client* client) {
         _clients.erase(it);
         return true;
     }
+    removeOperator(client);
     return false;
 }
 
@@ -133,15 +221,15 @@ bool Channel::removeOperator(Client* client) {
     return false;
 }
 
-bool Channel::kickClient(Client* operator_client, Client* target, const std::string& reason) {
-    if (!isOperator(operator_client)) {
-        return false;
-    }
-    std::string kickMessage = ":" + operator_client->getNickname() + " KICK " + 
-                             _name + " " + target->getNickname() + " :" + reason;
-    broadcastMessage(kickMessage);
-    return removeClient(target);
-}
+// bool Channel::kickClient(Client* operator_client, Client* target, const std::string& reason) {
+//     if (!isOperator(operator_client)) {
+//         return false;
+//     }
+//     std::string kickMessage = ":" + operator_client->getNickname() + " KICK " + 
+//                              _name + " " + target->getNickname() + " :" + reason;
+//     broadcastMessage(kickMessage);
+//     return removeClient(target);
+// }
 
 bool Channel::inviteClient(Client* operator_client, Client* target) {
     if (!isOperator(operator_client)) {

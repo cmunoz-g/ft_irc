@@ -14,6 +14,7 @@ private:
     bool                _capNegotiation; // ha mandado CAP END
     bool                _authenticated; // ha mandado PASS correctamente
     unsigned int        _id;
+    std::vector<unsigned int> _modes;
     std::map<const std::string, Channel*> _channels;   // Canales a los que está unido
     std::map<const std::string, Channel*> _op_channels; // Canales donde es operador
     Client(const Client& other);
@@ -55,6 +56,12 @@ public:
     void        setOperatorStatus(Channel *channel);
     void        removeOperatorStatus(const Channel *channel);
     bool        isOperator(const Channel *channel) const;
+
+    // Mode management
+    void        setMode(IRC::ClientMode mode, bool enabled);
+    void        setModesFromString(const std::string& modeString);
+    bool        hasMode(IRC::ClientMode mode) const;
+    std::string getModes() const;
 
     // Comunicación básica
     bool        sendMessage(const std::string& message);

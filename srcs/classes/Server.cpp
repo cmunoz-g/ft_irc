@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/24 12:05:27 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/25 12:43:44 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,7 +169,7 @@ void Server::handleClientMessage(struct pollfd& pfd) {
 						handleKickCommand(newMessage);
 						break;
 					case IRC::CMD_QUIT:
-						// handleQuitCommand(newMessage);
+						handleQuitCommand(newMessage);
 						break;
 					default:
 						break;
@@ -219,17 +219,64 @@ void Server::handleNickCommand(Message &message) { // llega un unico param que e
 }
 
 void Server::handleModeCommand(Message &message) {
-	std::string nickname = _clients[message.getSenderId()]->getNickname();
+	Client *client = _clients[message.getSenderId()];
+	std::string nickname = client->getNickname();
 	std::string response;
 
-	if (message.getParams().size() == 1) {
-		std::string channelName = message.getParams()[0];
-		response = ":" + SERVER_NAME + " 324 " + nickname + " " + channelName.erase(0, 1) + " +o" + "\r\n"; // hay que adaptar esto para enviar los modos concretos que tenga el canal
+	if (message.getParams().empty()) {
+		response = ":" + SERVER_NAME + " 461 " + nickname + " MODE :Not enough parameters\r\n";
 	}
 	else {
-		response = ":" + nickname + " MODE " + nickname + " +i\r\n"; // +i es el modo invisible que el cliente pide al servidor, mirar si hay que implementarlo en el servidor
+		std::string target = message.getParams()[0];
+		
+		if (target[0] == '#') { // Channel modes
+			if (_channels.find(target) == _channels.end()) {
+				response = ":" + SERVER_NAME + " 403 " + nickname + " " + target + " :No such channel\r\n";
+				client->receiveMessage(response);
+				return;
+			}
+			Channel *channel = _channels[target];
+			if (message.getParams().size() == 1) {
+				response = ":" + SERVER_NAME + " 324 " + nickname + " " + target + " " + channel->getModes() + "\r\n";
+			}
+			else { // Setting channel modes
+				std::string modeString = message.getParams()[1];
+				if (channel->isOperator(client)) {
+					channel->setModesFromString(modeString, message.getParams(), client);
+					response = ":" + nickname + " MODE " + target + " " + modeString + "\r\n";
+				}
+				else {
+					response = ":" + SERVER_NAME + " 482 " + nickname + " " + target + " :You're not channel operator\r\n";
+				}
+			}
+			
+		}
+		
+		else if (target == client->getNickname()) { // User modes
+			if (message.getParams().size() == 1) {
+				response = ":" + SERVER_NAME + " 221 " + nickname + " " + client->getModes() + "\r\n";
+			}
+			else { // Setting user modes
+				std::string modeString = message.getParams()[1];
+				client->setModesFromString(modeString);
+				response = ":" + nickname + " MODE " + nickname + " " + modeString + "\r\n";
+			}
+		}
+		else {
+			response = ":" + SERVER_NAME + " 401 " + nickname + " " + target + " :No such nick/channel\r\n";
+		}
 	}
-	_clients[message.getSenderId()]->receiveMessage(response);
+
+	client->receiveMessage(response);
+
+	// if (message.getParams().size() == 1) {
+	// 	std::string channelName = message.getParams()[0];
+	// 	response = ":" + SERVER_NAME + " 324 " + nickname + " " + channelName + " +o" + "\r\n"; // hay que adaptar esto para enviar los modos concretos que tenga el canal
+	// }
+	// else {
+	// 	response = ":" + nickname + " MODE " + nickname + " +i\r\n"; // +i es el modo invisible que el cliente pide al servidor, mirar si hay que implementarlo en el servidor
+	// }
+	// _clients[message.getSenderId()]->receiveMessage(response);
 }
 
 void Server::handlePingCommand(Message &message) {
@@ -523,8 +570,7 @@ void Server::handleKickCommand(Message &message) {
 	std::string kickResponse = ":" + kicker->getNickname() + "!" + kicker->getUsername() + "@" + SERVER_NAME + " KICK " + channelName + " " + targetName + " :" + reason + "\r\n";
 	channel->broadcastMessage(kickResponse, NULL);
 	target->leaveChannel(channel);
-	channel->removeClient(target); // Deberia juntar este y el de abajo en uno? o Llamar a remove operator desde remove client creo
-	channel->removeOperator(target);
+	channel->removeClient(target); 
 	
 	target->receiveMessage(kickResponse);
 }
@@ -540,8 +586,7 @@ void Server::handleQuitCommand(Message &message) {
 		++it;
 		if (channel->hasClient(client)) {
 			channel->broadcastMessage(quitResponse, client);
-			channel->removeClient(client); // De nuevo, juntar estas dos 
-			channel->removeOperator(client); //
+			channel->removeClient(client);
 		}
 	}
 

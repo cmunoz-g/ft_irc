@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/24 12:00:45 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/25 12:48:11 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,6 @@ void	Client::joinChannel(Channel *channel) {
 		return ;
 	}
 	_channels.insert(std::make_pair(channel->getName(), channel));
-	//channel.addClient();
 }
 
 void	Client::leaveChannel(const Channel *channel) {
@@ -183,6 +182,82 @@ void	Client::receiveMessage(const std::string &message) {
 		std::cout << "Message sent to client" << _id << ": " << message;
 	}
 }
+
+void Client::setMode(IRC::ClientMode mode, bool enabled) {
+    std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), mode);
+    if (enabled && it == _modes.end()) {
+        _modes.push_back(mode);
+    } else if (!enabled && it != _modes.end()) {
+        _modes.erase(it);
+    }
+}
+
+void Client::setModesFromString(const std::string& modeString) {
+    bool adding = true;
+
+    for (size_t i = 0; i < modeString.length(); ++i) {
+        char c = modeString[i];
+
+        if (c == '+') {
+            adding = true;  
+        } else if (c == '-') {
+            adding = false;
+        } else {
+            IRC::ClientMode modeEnum = IRC::C_MODE_NONE;
+
+            switch (c) {
+                case 'i':
+                    modeEnum = IRC::C_MODE_I; // Invisible mode
+                    break;
+                case 'o':
+                    modeEnum = IRC::C_MODE_O; // Operator privileges
+                    break;
+                default:
+                    break;
+            }
+
+            // Handle adding or removing modes
+            if (adding) {
+                if (!hasMode(modeEnum)) {
+                    _modes.push_back(modeEnum); // Add mode if not present
+                }
+            } else {
+				std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), modeEnum);
+                if (it != _modes.end()) {
+                    _modes.erase(it); // Remove mode if present
+                }
+            }
+        }
+    }
+}
+
+bool Client::hasMode(IRC::ClientMode mode) const {
+    return std::find(_modes.begin(), _modes.end(), mode) != _modes.end();
+}
+
+std::string Client::getModes() const {
+    std::string modes = "+";
+
+    for (size_t i = 0; i < _modes.size(); ++i) {
+        switch (_modes[i]) {
+            case IRC::C_MODE_I:
+                modes += "i"; // Invisible mode
+                break;
+            case IRC::C_MODE_O:
+                modes += "o"; // Operator mode
+                break;
+            default:
+                break;
+        }
+    }
+
+    // If no modes are active, return an empty string
+    if (modes.length() == 1) // Only contains '+'
+        return "";
+
+    return modes;
+}
+
 
 //
 

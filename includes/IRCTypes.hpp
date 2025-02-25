@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 13:23:33 by juramos           #+#    #+#             */
-/*   Updated: 2024/12/22 18:31:57 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/25 12:35:07 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,12 @@ namespace IRC {
         MODE_K,    // k - Canal tiene password
         MODE_O,    // o - Privilegios de operador
         MODE_L     // l - Límite de usuarios
+    };
+
+    enum ClientMode {
+        C_MODE_NONE,
+        C_MODE_O,    // o - Privilegios de operador
+        C_MODE_I    // i - Invisible
     };
 
     // // Estados posibles de un usuario
