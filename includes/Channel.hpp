@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 12:44:47 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 09:41:29 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,25 +65,25 @@ private:
     
     // Manejo de usuarios
     bool addClient(Client* client);
-    bool removeClient(Client* client);
+    void removeClient(Client* client);
     bool hasClient(Client* client) const;
     
     // Manejo de invitados
     void addInvitedClient(Client* client);
     bool isInvitedClient(Client* client) const;
-    bool removeInvitedClient(Client *client);
+    void removeInvitedClient(Client *client);
 
     // Manejo de operadores
-    bool addOperator(Client* client);
-    bool removeOperator(Client* client);
+    void addOperator(Client* client);
+    void removeOperator(Client* client);
     
     // Comandos de operador (requeridos por el subject)
-    //bool kickClient(Client* operator_client, Client* target, const std::string& reason = "");
-    bool inviteClient(Client* operator_client, Client* target);
+    void inviteClient(Client* operator_client, Client* target);
 
     // Mensajes
     void broadcastMessage(const std::string& message, Client* exclude = NULL);
     void sendNames(Client* client) const;
+
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 12:55:15 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 09:51:49 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,7 +159,7 @@ bool Channel::checkPassword(const std::string& pass) const {
 }
 
 bool Channel::setTopic(Client* client, const std::string& newTopic) {
-    if (!isOperator(client) && hasMode(IRC::MODE_T)) { // IRC::TOPIC_RESTRICTED
+    if (!isOperator(client) && hasMode(IRC::MODE_T)) {
         return false;
     }
     _topic = newTopic;
@@ -169,25 +169,24 @@ bool Channel::setTopic(Client* client, const std::string& newTopic) {
 bool Channel::addClient(Client* client) {
     if (getUserCount() >= getUserLimit())
         return false;
+    
     _clients.insert(std::make_pair(client->getId(), client));
     return true;
 }
 
-bool Channel::removeClient(Client* client) {
+void Channel::removeClient(Client* client) {
     std::map<unsigned int, Client*>::iterator it = _clients.find(client->getId());
     if (it != _clients.end()) {
         _clients.erase(it);
-        return true;
     }
     removeOperator(client);
-    return false;
 }
 
 bool Channel::hasClient(Client* client) const {
     return _clients.find(client->getId()) != _clients.end();
 }
 
-void Channel::addInvitedClient(Client* client) { // Cambiar a bool ? No se si lo necesito
+void Channel::addInvitedClient(Client* client) {
     _invitedClients.insert(std::make_pair(client->getId(), client));
 }
 
@@ -195,47 +194,29 @@ bool Channel::isInvitedClient(Client* client) const {
     return _invitedClients.find(client->getId()) != _invitedClients.end();
 }
 
-bool Channel::removeInvitedClient(Client *client) {
+void Channel::removeInvitedClient(Client *client) {
     std::map<unsigned int, Client*>::iterator it = _invitedClients.find(client->getId());
     if (it != _invitedClients.end()) {
         _invitedClients.erase(it);
-        return true;
     }
-    return false;
 }
 
-bool Channel::addOperator(Client* client) {
-    if (getUserCount() >= getUserLimit()) {
-        return false;
+void Channel::addOperator(Client* client) {
+    if (!(getUserCount() >= getUserLimit())) {
+        _operators.insert(std::make_pair(client->getId(), client));
     }
-    _operators.insert(std::make_pair(client->getId(), client));
-    return true;
 }
 
-bool Channel::removeOperator(Client* client) {
+void Channel::removeOperator(Client* client) {
     std::map<unsigned int, Client*>::iterator it = _operators.find(client->getId());
     if (it != _operators.end()) {
         _operators.erase(it);
-        return true;
     }
-    return false;
 }
 
-// bool Channel::kickClient(Client* operator_client, Client* target, const std::string& reason) {
-//     if (!isOperator(operator_client)) {
-//         return false;
-//     }
-//     std::string kickMessage = ":" + operator_client->getNickname() + " KICK " + 
-//                              _name + " " + target->getNickname() + " :" + reason;
-//     broadcastMessage(kickMessage);
-//     return removeClient(target);
-// }
-
-bool Channel::inviteClient(Client* operator_client, Client* target) {
-    if (!isOperator(operator_client)) {
-        return false;
-    }
-    return addClient(target);
+void Channel::inviteClient(Client* operator_client, Client* target) {
+    if (isOperator(operator_client))
+        addInvitedClient(target);
 }
 
 void Channel::broadcastMessage(const std::string& message, Client* exclude) {
@@ -276,29 +257,16 @@ bool Channel::isInviteOnly() const {
 }
 
 void Channel::notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param) {
-    std::string modeStr;
-    std::string message;
-
-    if (enabled)
-        modeStr = "+";
-    else
-        modeStr = "-";
-    modeStr += mode;
-
-    message = ":";
-    message += changer->getNickname();
-    message += "!";
-    message += changer->getUsername();
-    message += "@";
-    message += SERVER_NAME;
-    message += " MODE ";
-    message += _name;
-    message += " ";
-    message += modeStr;
+    std::ostringstream message;
     
+    message << ":" << changer->getNickname() << "!" << changer->getUsername()
+            << "@" << SERVER_NAME << " MODE " << _name << " "
+            << (enabled ? "+" : "-") << mode;
+
     if (!param.empty()) {
-        message += " ";
-        message += param;
+        message << " " << param;
     }
-    broadcastMessage(message);
+
+    broadcastMessage(message.str());
 }
+

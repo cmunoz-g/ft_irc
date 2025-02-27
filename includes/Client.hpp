@@ -64,7 +64,6 @@ public:
     std::string getModes() const;
 
     // Comunicación básica
-    bool        sendMessage(const std::string& message);
     void        receiveMessage(const std::string &message);
 };
 

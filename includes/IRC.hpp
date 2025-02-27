@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 12:21:31 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 10:05:44 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ const static int BUFFER_SIZE = 1024;
 static std::string SERVER_NAME = "irc.localhost";
 
 // Utils
-int stringToInt(const std::string& str);
+int		stringToInt(const std::string& str);
+bool	isValidMode(char mode, bool isChannelMode);
+void 	error(const std::string& errorMsg, bool throws, bool usesErrno);
 
 #endif

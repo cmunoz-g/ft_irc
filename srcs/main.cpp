@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 12:57:52 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 12:17:49 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,44 +14,27 @@
 
 // to do
 /*
-
-    - limpiar el codigo, anadir casos limites y tests
-        - terminar de testear MODE
-            - cuando mando /MODE cars asdfaius, parece como que el cliente se piensa que he aceptado esos modos (aunque no se guardan en los modos del servidor)
-            - habia un problema al setear el modo +i, daba error
-        - arreglar JOIN:
-            - arreglar el join a varios canales
-            - arreglar lo del MODE_I en JOIN
-            - arreglar lo del MODE_K en JOIN
-        - checkear el CAP
-        - revisar respuesta 461 en handleInviteCommand
-        - comprobar el comentario en Server::start para asegurarme de si es cierto
-        - overload de == para Clienty Channel?
-        - cambiar las bool ft de juan a void (eg la de removeClient), tb revisar lo del enabled en setMode
-        - revisar el comentario de setTopic
-        - que hacer con kickClient ? revisar subject
-        - juntar la de notifyModeChange para que quede algo mas escueta
-        - revisar Client::sendMessage, setOperatorStatus
-        - hacer funcion de error ? con throws hasta main puedo creo
-        - arreglar irssi conectandose sin contrasena
-        - anadir ft helpers (eg si un channel existe)
-        - organizar ft en diferentes archivos
-        - bug: cuando conectas un cliente, desconectas, y vuelves a conectar explota
-        - comprobar la memoria
-    
-    
     - testear con varios clientes a la vez
+        - bug: cuando conectas un cliente, desconectas, y vuelves a conectar explota
+        - comprobar la memoria (que esta pasando con los clientID que no ponen bien la contrasenia ?)
         - KICK, INVITE, ETC...
         - testear checkUniqueNick
+        - si un cliente se desconecta, no se guardan los datos no ?
     - revisar tutoriales, otros repos
+    - REVISAR todos los codigos, 401 404 405, etc etc
     - testeos intensivos, pulir, revisar errores
+        - volver a revisar el comportamiento esperado de MODE, especialmente cuando hacemso MODE #channel o , k y l
+    - poner todo bonito
+        - comprobar que cumplo todos los requisitos de clases canonicas etc
+        - eliminar ft que no se utilicen (candidatos: notifyModeChange)
+        - comentarios
     - comentarios en el codigo
 
 */
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        std::cerr << "Uso: " << argv[0] << " <puerto> <contraseña>" << std::endl;
+        std::cerr << "Use: " << argv[0] << " <port> <password>" << std::endl;
         return 1;
     }
     try {

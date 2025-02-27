@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 11:50:38 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 12:26:24 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ private:
     int _server_fd;
     int _port;
     std::string _password;
+    std::vector<struct pollfd> _pollfds;
     std::map<unsigned int, Client*>		_clients; // _client_fd no es único, puesto que cuando se desconecta se setea a -1. Se crea una variable _id dentro de Client, inicializada solo desde Server y que asegura que sea única
 	std::map<const std::string, Channel*>	_channels;
     
@@ -35,8 +36,8 @@ public:
 
 	int	getPort() const;
 	const std::string	&getPassword() const;
-    void handleNewConnection(std::vector<struct pollfd> &pollfds);
-    void handleClientMessage(struct pollfd& pfd);
+    void handleNewConnection();
+    bool handleClientMessage(struct pollfd& pfd);
     void start();
     void deleteClients();
     unsigned int fetchClientIdFromPid(int fd);

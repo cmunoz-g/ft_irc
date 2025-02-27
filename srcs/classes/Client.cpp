@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 12:48:11 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 11:14:51 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,28 +86,32 @@ void	Client::clearBuffer(void) {
 
 void	Client::joinChannel(Channel *channel) {
 	if (isInChannel(channel)) {
-		std::cerr << "Client is already on the channel";
+		error("Client is already on the channel", false, false);
 		return ;
 	}
 	_channels.insert(std::make_pair(channel->getName(), channel));
 }
 
-void	Client::leaveChannel(const Channel *channel) {
-	if (!isInChannel(channel)) {
-		std::cerr << "Client is not on the channel" << std::endl;
-		return ;
-	}
+void Client::leaveChannel(const Channel *channel) {
+    if (!isInChannel(channel)) {
+		error("Client is not on the channel", false, false);
+        return;
+    }
 
-	std::map<const std::string, Channel*>::iterator it = _channels.begin();
-	
-	while (it->second->getName() != channel->getName())  // Ahora mismo, para comprobar que sea el canal que estamos buscando comparamos nombres, pero deberiamos hacer un overload de == en Channel
-		++it;
-		
-	_channels.erase(it);
-	
-	if (isOperator(channel))
-		removeOperatorStatus(channel);
+    std::map<const std::string, Channel*>::iterator it = _channels.find(channel->getName());
+    
+    if (it == _channels.end()) {
+		error("Channel not found in client's list", false, false);
+        return;
+    }
+
+    if (isOperator(channel)) {
+        removeOperatorStatus(channel);
+    }
+
+    _channels.erase(it);
 }
+
 
 bool	Client::isInChannel(const Channel *channel) const {
 	for (std::map<const std::string, Channel*>::const_iterator it = _channels.begin(); it != _channels.end(); ++it) {
@@ -117,33 +121,35 @@ bool	Client::isInChannel(const Channel *channel) const {
 	return (false);
 }
 
-void	Client::setOperatorStatus(Channel *channel) {
-	if (!isInChannel(channel)) {
-		// pensar como gestionar errores, como sacar los mensajes etc.
-		std::cerr << "Client is not on the channel" << std::endl;
-		return ;
-	}
-	else if (isOperator(channel)) {
-		std::cerr << "Client is already an operator" << std::endl;
-		return ;
-	}
-	
-	std::map<const std::string, Channel*>::const_iterator it = _channels.begin();
-	
-	while (it->second->getName() != channel->getName()) 
-		++it;
+void Client::setOperatorStatus(Channel *channel) {
+    if (!isInChannel(channel)) {
+        error("Client is not on the channel", false, false);
+        return;
+    }
 
-	//channel.addOperator(it->second);
-	_op_channels.insert(std::make_pair(channel->getName(), channel));
+    if (isOperator(channel)) {
+        error("Client is already an operator", false, false);
+        return;
+    }
+
+    std::map<std::string, Channel*>::iterator it = _channels.find(channel->getName());
+    if (it == _channels.end()) {
+        error("Channel not found in client's list", false, false);
+        return; 
+    }
+
+    channel->addOperator(this);
+    _op_channels[channel->getName()] = channel;
 }
+
 
 void	Client::removeOperatorStatus(const Channel *channel) {
 	if (!isInChannel(channel)) {
-		std::cerr << "Client is not on the channel" << std::endl;
+		error("Client is not on the channel", false, false);
 		return ;
 	}
 	else if (!isOperator(channel)) {
-		std::cerr << "Client is not an operator" << std::endl;
+		error("Client is not an operator", false, false);
 		return ;
 	}
 
@@ -164,24 +170,27 @@ bool	Client::isOperator(const Channel *channel) const {
 
 //
 
-bool	Client::sendMessage(const std::string& message) { // Basic implementation, review
-	std::cout << _nickname << ": " << message << std::endl;
-	return (true);
+void Client::receiveMessage(const std::string &message) {
+    ssize_t bytesSent = ::send(_socket, message.c_str(), message.size(), 0);
+
+    if (bytesSent < 0) {
+        std::stringstream ss;
+        ss << "Error sending message to client " << _id;
+        error(ss.str(), false, true);
+    } 
+    else if (static_cast<size_t>(bytesSent) < message.size()) {
+        std::stringstream ss;
+        ss << "Partial send: Only " << bytesSent << " bytes sent to client " << _id;
+        error(ss.str(), false, true);
+    } 
+    else {
+		std::stringstream ss;
+		ss << "[MSG] [ID:" << _id << "] Message sent to client: " << message;
+		std::cout << ss.str();
+    }
 }
 
-void	Client::receiveMessage(const std::string &message) {
-	ssize_t bytesSent = ::send(_socket, message.c_str(), message.size(), 0);
 
-	if (bytesSent < 0) {
-		std::cerr << "Error sending message to client" << _id << ": " << strerror(errno) << std::endl;
-	}
-	else if (static_cast<size_t>(bytesSent) < message.size()) {
-		std::cerr << "Partial send: Only" << bytesSent << " bytes sent to client" << _id << ": " << strerror(errno) << std::endl;
-	}
-	else {
-		std::cout << "Message sent to client" << _id << ": " << message;
-	}
-}
 
 void Client::setMode(IRC::ClientMode mode, bool enabled) {
     std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), mode);
