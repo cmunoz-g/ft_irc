@@ -1,11 +1,17 @@
 #include "IRC.hpp"
 
 unsigned int Server::fetchClientIdFromPid(int fd) {
-	for (int i = 1; _clients[i]; i++)
-		if (_clients[i]->getSocket() == fd)
-			return (_clients[i]->getId());
-	return (-1);
+    for (std::map<unsigned int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if (it->second->getSocket() == fd) {
+            return it->first;
+        }
+    }
+    std::stringstream ss;
+	ss << "Client with file descriptor " << fd << " not found" << std::endl;
+    error(ss.str(), true, false);
+    return 0; 
 }
+
 
 void Server::setUpServerSocket() {
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -37,46 +43,35 @@ void Server::setUpServerSocket() {
 }
 
 
-void	Server::handleNewConnection() {
-	struct sockaddr_in client_addr;
-	socklen_t client_len = sizeof(client_addr);
-	
-	int client_fd = accept(_server_fd, (struct sockaddr*)&client_addr, &client_len);
-	if (client_fd < 0) {
-		if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR) { // Expected non errors, safe to ignore
-			return;
-		}
-	
-		if (errno == EMFILE || errno == ENFILE) {
-			error("Server out of sockets: Too many open file descriptors", false, true);
-			return;
-		}
-	
-		if (errno == EBADF) {
-			error("Invalid server socket descriptor", true, true);
-		}
-		error("Error accepting connection", false, true);
-	}
+void Server::handleNewConnection() {
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    
+    int client_fd = accept(_server_fd, (struct sockaddr*)&client_addr, &client_len);
+    if (client_fd < 0) {
+        if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR) {
+            return;
+        }
+        error("Error accepting connection", false, true);
+        return;
+    }
 
-	// Configurar nuevo socket cliente como no bloqueante
-	fcntl(client_fd, F_SETFL, O_NONBLOCK);
+    fcntl(client_fd, F_SETFL, O_NONBLOCK); // Sets non-blocking mode
 
-	// Añadir nuevo cliente a poll
-	struct pollfd client_pollfd = {client_fd, POLLIN, 0};
-	_pollfds.push_back(client_pollfd);
+    struct pollfd client_pollfd = {client_fd, POLLIN, 0};
+    _pollfds.push_back(client_pollfd);
 
-	// Añadir nuevo cliente al map
-	static int id = 1;
-	_clients[id] = new Client(client_fd, id);
-	// el mismo objeto, con la misma dir. de memoria tanto en server como en channel
-	
-	std::stringstream ss;
-	ss << "[LOG] [ID:" << id << "] New connection accepted" << std::endl;
-	std::cout << ss.str();
-	
-	id++;
+    // Finds the first available ID
+    static unsigned int next_id = 1;
+    while (_clients.find(next_id) != _clients.end()) {
+        next_id++;
+    }
 
+    // Adds new client
+    _clients[next_id] = new Client(client_fd, next_id);
+    std::cout << "[LOG] [ID:" << next_id << "] New connection accepted" << std::endl;
 }
+
 
 bool Server::handleClientMessage(struct pollfd& pfd) {
     char buffer[BUFFER_SIZE];
@@ -85,8 +80,6 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
     if (bytes_read <= 0) {
         if (bytes_read == 0 || errno != EWOULDBLOCK) {
             // Client disconnected or error occurred
-            close(pfd.fd);
-            pfd.fd = -1; // Mark for removal
             return false; // Signal that the client should be removed
         }
         return true; // No data, but client still connected
@@ -94,13 +87,22 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
 
     buffer[bytes_read] = '\0';
     unsigned int client_id = fetchClientIdFromPid(pfd.fd);
+
+    if (client_id == 0) {
+        std::cout << "[ERROR] Could not find client for fd " << pfd.fd << std::endl;
+        return false; // Signal to remove this fd
+    }
+
+    std::cout << "[DEBUG] Handling client message" << " CLIENT ID: " << client_id << std::endl;
+
     if (client_id > 0) {
         Client *client = _clients[client_id];
-
+      
         // Append data to client's buffer
         client->appendToBuffer(buffer);
         std::string buf = client->getBuffer();
         size_t pos;
+        
 
         // Store all commands in a vector if irssi sends several commands together
         std::vector<std::string> commands;
@@ -122,7 +124,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
         for (size_t i = 0; i < commands.size(); i++) {
             client->setBuffer(commands[i]); // Set message buffer for parsing
             Message newMessage(client);
-            //newMessage.printMessageDebug();
+            newMessage.printMessageDebug();
 
             switch (newMessage.getCommandType()) {
                 case IRC::CMD_NICK: handleNickCommand(newMessage); break;
@@ -171,4 +173,37 @@ void Server::deleteClients() {
 			++it;
 		}
 	} 
+}
+
+void Server::removeClient(unsigned int client_id) {
+    std::map<unsigned int, Client*>::iterator it = _clients.find(client_id);
+    if (it == _clients.end())
+        return;
+    
+    Client* client = it->second;
+    int fd = client->getSocket();
+    
+    // Remove from all channels
+    std::map<const std::string, Channel*>::iterator ch_it;
+    for (ch_it = _channels.begin(); ch_it != _channels.end(); ++ch_it) {
+        if (ch_it->second->hasClient(client)) {
+            ch_it->second->removeClient(client);
+        }
+    }
+    
+    // Remove from pollfds
+    for (size_t i = 0; i < _pollfds.size(); ++i) {
+        if (_pollfds[i].fd == fd) {
+            close(fd); // Close socket ONLY HERE
+            _pollfds.erase(_pollfds.begin() + i);
+            break;
+        }
+    }
+    
+    // Remove from clients map
+    _clients.erase(it);
+    delete client; // Delete the client object
+    
+    std::cout << "[LOG] [ID:" << client_id << "] Client fully removed from server" << std::endl;
+    std::cout << "[DEBUG] Number of clients after deletion: " << _clients.size() << std::endl;
 }

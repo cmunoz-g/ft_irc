@@ -495,40 +495,22 @@ void Server::handleKickCommand(Message &message) {
 void Server::handleQuitCommand(Message &message) {
     std::map<unsigned int, Client*>::iterator it_client = _clients.find(message.getSenderId());
     if (it_client == _clients.end())
-		return;
+        return;
 
     Client *client = it_client->second;
     std::string reason = (message.getParams().empty()) ? "Client quit" : message.getParams()[0];
     std::string quitResponse = ":" + client->getNickname() + "!" + client->getUsername() + "@" + SERVER_NAME + " QUIT :" + reason + "\r\n";
 
-    // Notifies all channels that the client is leaving
+    // Notify all channels
     std::map<const std::string, Channel*>::iterator it;
     for (it = _channels.begin(); it != _channels.end(); ++it) {
         Channel *channel = it->second;
         if (channel->hasClient(client)) {
             channel->broadcastMessage(quitResponse, client);
-            channel->removeClient(client);
         }
     }
 
     client->receiveMessage(quitResponse);
-
-    // Removes client FD from _pollfds before deleting client
-    std::vector<struct pollfd>::iterator it_poll;
-    for (it_poll = _pollfds.begin(); it_poll != _pollfds.end(); ++it_poll) {
-        if (it_poll->fd == client->getSocket()) {
-            _pollfds.erase(it_poll);
-            break; 
-        }
-    }
-
-    // Cleans up client (removes from channels and closes socket)
-    client->cleanup();
-
-    // Deletes client and removes it from _clients map
-    int clientId = message.getSenderId();
-    delete client;
-    _clients.erase(it_client); // Uses iterator to erase safely
-
-    std::cout << "[LOG] [ID:" << clientId << "] Client fully removed from server" << std::endl;
+    
+    removeClient(message.getSenderId());
 }

@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 12:26:24 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 18:32:37 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ public:
     bool handleClientMessage(struct pollfd& pfd);
     void start();
     void deleteClients();
+    void removeClient(unsigned int client_id);
     unsigned int fetchClientIdFromPid(int fd);
 
     // checks

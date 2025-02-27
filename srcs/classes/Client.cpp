@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 11:14:51 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 18:31:26 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,7 @@ Client::Client(int socket, unsigned int id): _socket(socket), _nickname(""),
 Client::Client(): _socket(-1), _nickname(""),
 	_username(""), _buffer(""), _authenticated(false), _id(0) {} // 0 is set as default id
 
-Client::~Client() {
-	close(_socket);
-}
+Client::~Client() {}
 
 int	Client::getSocket() const { return _socket; }
 
@@ -280,8 +278,11 @@ void	Client::cleanup() {
 		it->second->removeOperator(this);
 	}
 	_op_channels.clear();
-	close(_socket);
-	_socket = -1;
+    
+	if (_socket != -1) { // Prevents reusing closed socket
+        close(_socket);
+        _socket = -1;  
+    }
 }
 
 bool	Client::operator==(Client &other) {

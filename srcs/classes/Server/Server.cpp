@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 12:20:47 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/02/27 18:32:03 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ Server::~Server() {
 }
 
 /**/
-
 
 void Server::start() {
     Message::initCommandMap();
@@ -57,13 +56,20 @@ void Server::start() {
                 } else {
                     // If `handleClientMessage()` returns false, remove client
                     if (!handleClientMessage(_pollfds[i])) {
-                        close(_pollfds[i].fd);
-                        _pollfds.erase(_pollfds.begin() + i); // Remove disconnected FD
+                        unsigned int client_id = fetchClientIdFromPid(_pollfds[i].fd);
+                        if (client_id > 0) {
+                            removeClient(client_id);
+                        } 
+                        else {
+                            // Just close the fd if we couldn't find a client (shouldn't happen)
+                            close(_pollfds[i].fd);
+                            _pollfds.erase(_pollfds.begin() + i);
+                        }
                     }
                 }
             }
         }
-        deleteClients(); // Clean up client data structures
+        // deleteClients(); 
     }
 }
 
