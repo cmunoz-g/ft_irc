@@ -209,3 +209,25 @@ void Server::removeClient(unsigned int client_id) {
     std::cout << "[LOG] [ID:" << client_id << "] Client fully removed from server" << std::endl;
     std::cout << "[DEBUG] Number of clients after deletion: " << _clients.size() << std::endl;
 }
+
+void Server::tryRegister(Client* client) {
+    if (client->isRegistered()) {
+        return;
+    }
+
+    if (!_password.empty() && !client->isAuthenticated()) { // Additional check
+        return; 
+    }
+
+    if (client->getUsername().empty()) {
+        return;
+    }
+
+    if (client->getNickname().empty()) {
+        return;
+    }
+
+    client->setRegistered(true);
+    std::string response = ":" + SERVER_NAME + " 001 " + client->getNickname() + " :Welcome to the IRC Server!\r\n";
+    client->receiveMessage(response);
+}

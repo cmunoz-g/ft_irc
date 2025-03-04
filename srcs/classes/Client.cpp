@@ -6,17 +6,17 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 18:31:26 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/04 12:48:30 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
 Client::Client(int socket, unsigned int id): _socket(socket), _nickname(""),
-	_username(""), _buffer(""), _authenticated(false), _id(id) {}
+	_username(""), _buffer(""), _authenticated(false), _registered(false), _id(id) {}
 
 Client::Client(): _socket(-1), _nickname(""),
-	_username(""), _buffer(""), _authenticated(false), _id(0) {} // 0 is set as default id
+	_username(""), _buffer(""), _authenticated(false), _registered(false), _id(0) {} // 0 is set as default id
 
 Client::~Client() {}
 
@@ -42,6 +42,8 @@ unsigned int	Client::getId() const { return _id; }
 //
 bool	Client::isAuthenticated() const { return _authenticated; }
 
+bool	Client::isRegistered() const { return _registered; }
+
 bool    Client::isCapNegotiationDone() const { return _capNegotiation; }
 
 //
@@ -56,6 +58,10 @@ void        Client::setUsername(const std::string& username) {
 
 void        Client::setAuthenticated(bool status) {
 	_authenticated = status;
+}
+
+void        Client::setRegistered(bool status) {
+    _registered = status;
 }
 
 void		Client::setCapNegotiationStatus(bool status) {

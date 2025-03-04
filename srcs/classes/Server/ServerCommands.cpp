@@ -35,27 +35,33 @@ void Server::handleCapCommand(Message &message) {
     }
 }
 
-void Server::handleNickCommand(Message &message) { 
+void Server::handleNickCommand(Message &message) {
     Client *client = _clients[message.getSenderId()];
     std::string nickname = message.getParams()[0];
 
     if (!_password.empty() && !client->isAuthenticated()) {
+        // They haven't done PASS (or used the wrong PASS) yet.
         client->receiveMessage(":" + SERVER_NAME + " 451 " + nickname + " :You have not registered\r\n");
         return;
     }
 
+    // Nick uniqueness check
     if (checkUniqueNick(nickname)) {
         client->setNickname(nickname);
-
-        std::stringstream ss;
-        ss << "[LOG] [ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
-           << client->getNickname() << std::endl;
-        std::cout << ss.str();
-    } 
-    else {
-        std::string response = ":" + SERVER_NAME + " 433 " + nickname + " :Nickname is already in use\r\n";
+        std::cout << "[LOG] [ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
+                  << client->getNickname() << std::endl;
+    } else {
+        // 433 ERR_NICKNAMEINUSE
+        std::string currentNick = client->getNickname().empty() ? "*" : client->getNickname();
+        std::string triedNick = nickname;
+        std::string response = ":" + SERVER_NAME + " 433 "
+            + currentNick + " " + triedNick + " :Nickname is already in use\r\n";
         client->receiveMessage(response);
+        return;
     }
+
+    // After setting a valid nick, attempt registration
+    tryRegister(client);
 }
 
 
@@ -178,21 +184,19 @@ void Server::handleUserCommand(Message &message) {
     Client *client = _clients[message.getSenderId()];
 
     if (!_password.empty() && !client->isAuthenticated()) {
+        // They haven't done PASS yet.
         client->receiveMessage(":" + SERVER_NAME + " 451 " + client->getNickname() + " :You have not registered\r\n");
         return;
     }
 
+    // USER has 4 params (username, hostname, server, realname),
+    // but you only strictly need the first param as "username."
     client->setUsername(message.getParams()[0]);
+    std::cout << "[LOG] [ID:" << message.getSenderId() << "] USER command handled, username saved as " 
+              << client->getUsername() << std::endl;
 
-    std::stringstream ss;
-    ss << "[LOG] [ID:" << message.getSenderId() << "] USER command handled, username saved as " 
-       << client->getUsername() << std::endl;
-    std::cout << ss.str();
-
-    if (!client->getNickname().empty() && !client->getUsername().empty() && client->isAuthenticated()) {
-        std::string response = ":" + SERVER_NAME + " 001 " + client->getNickname() + " :Welcome to the IRC Server!\r\n";
-        client->receiveMessage(response);
-    }
+    // After setting a username, attempt registration
+    tryRegister(client);
 }
 
 
