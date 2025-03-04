@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 17:42:20 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/04 12:24:41 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 // to do
 /*
     - testear con varios clientes a la vez
-        - bug: cuando conectas un cliente, desconectas, y vuelves a conectar explota
         - comprobar la memoria (que esta pasando con los clientID que no ponen bien la contrasenia ?)
         - KICK, INVITE, ETC...
         - testear checkUniqueNick

@@ -499,18 +499,19 @@ void Server::handleQuitCommand(Message &message) {
 
     Client *client = it_client->second;
     std::string reason = (message.getParams().empty()) ? "Client quit" : message.getParams()[0];
-    std::string quitResponse = ":" + client->getNickname() + "!" + client->getUsername() + "@" + SERVER_NAME + " QUIT :" + reason + "\r\n";
+    std::string quitResponse =
+        ":" + client->getNickname() + "!" + client->getUsername() +
+        "@" + SERVER_NAME + " QUIT :" + reason + "\r\n";
 
     // Notify all channels
-    std::map<const std::string, Channel*>::iterator it;
-    for (it = _channels.begin(); it != _channels.end(); ++it) {
+    for (std::map<const std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    {
         Channel *channel = it->second;
         if (channel->hasClient(client)) {
             channel->broadcastMessage(quitResponse, client);
         }
     }
 
+    // Send the QUIT message back to the quitting client
     client->receiveMessage(quitResponse);
-    
-    removeClient(message.getSenderId());
 }

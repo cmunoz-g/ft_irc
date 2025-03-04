@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 18:32:03 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/04 12:20:26 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ Server::~Server() {
 
 void Server::start() {
     Message::initCommandMap();
-    _pollfds.clear(); // Ensure no leftovers
+    _pollfds.clear(); // Ensures no leftovers
 
     struct pollfd server_pollfd = {_server_fd, POLLIN, 0};
     _pollfds.push_back(server_pollfd);
@@ -43,25 +43,25 @@ void Server::start() {
 
         if (ret < 0) {
             if (errno == EINTR) {
-                continue; // Ignore interrupts (e.g., signal received)
+                continue; // Ignore interrupts (e.g., signals)
             }
             error("Fatal error in poll", true, true);
         }
 
-        // Iterate in reverse to safely erase closed sockets
+        // Iterate in reverse order so we can safely erase closed sockets
         for (size_t i = _pollfds.size(); i-- > 0;) {
             if (_pollfds[i].revents & POLLIN) {
                 if (_pollfds[i].fd == _server_fd) {
+                    // Accepts new connection
                     handleNewConnection();
                 } else {
-                    // If `handleClientMessage()` returns false, remove client
+                    // handleClientMessage(...) returns false if the client should be removed
                     if (!handleClientMessage(_pollfds[i])) {
                         unsigned int client_id = fetchClientIdFromPid(_pollfds[i].fd);
                         if (client_id > 0) {
                             removeClient(client_id);
-                        } 
-                        else {
-                            // Just close the fd if we couldn't find a client (shouldn't happen)
+                        } else {
+                            // Close FD if no client is associated
                             close(_pollfds[i].fd);
                             _pollfds.erase(_pollfds.begin() + i);
                         }
@@ -69,7 +69,7 @@ void Server::start() {
                 }
             }
         }
-        // deleteClients(); 
     }
 }
+
 

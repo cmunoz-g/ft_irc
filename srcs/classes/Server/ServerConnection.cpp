@@ -125,7 +125,6 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             client->setBuffer(commands[i]); // Set message buffer for parsing
             Message newMessage(client);
             newMessage.printMessageDebug();
-
             switch (newMessage.getCommandType()) {
                 case IRC::CMD_NICK: handleNickCommand(newMessage); break;
                 case IRC::CMD_USER: handleUserCommand(newMessage); break;
@@ -137,7 +136,10 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
                 case IRC::CMD_MODE: handleModeCommand(newMessage); break;
                 case IRC::CMD_PING: handlePingCommand(newMessage); break;
                 case IRC::CMD_KICK: handleKickCommand(newMessage); break;
-                case IRC::CMD_QUIT: handleQuitCommand(newMessage); break;
+                case IRC::CMD_QUIT:
+                    handleQuitCommand(newMessage);
+                    return false;
+                    break;
                 default: break;
             }
         }
