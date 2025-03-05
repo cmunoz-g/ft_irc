@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 10:05:44 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/05 12:36:56 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,13 @@
 #include "Client.hpp"
 #include "Server.hpp"
 #include "Message.hpp"
+
+#define RESET   "\033[0m" 
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define BLUE    "\033[34m"
+#define YELLOW  "\033[33m"
+#define MAGENTA "\033[35m"
 
 class Channel;
 class Client;

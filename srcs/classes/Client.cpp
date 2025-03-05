@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/04 12:48:30 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/05 12:37:05 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,7 +189,7 @@ void Client::receiveMessage(const std::string &message) {
     } 
     else {
 		std::stringstream ss;
-		ss << "[MSG] [ID:" << _id << "] Message sent to client: " << message;
+		ss << MAGENTA << "[MSG] " << RESET << "[ID:" << _id << "] Message sent to client: " << message;
 		std::cout << ss.str();
     }
 }

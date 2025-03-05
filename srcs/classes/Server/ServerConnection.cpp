@@ -29,6 +29,7 @@ void Server::setUpServerSocket() {
     }
 
     struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(_port);
@@ -69,7 +70,7 @@ void Server::handleNewConnection() {
 
     // Adds new client
     _clients[next_id] = new Client(client_fd, next_id);
-    std::cout << "[LOG] [ID:" << next_id << "] New connection accepted" << std::endl;
+    std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << next_id << "] New connection accepted" << std::endl;
 }
 
 
@@ -89,11 +90,11 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
     unsigned int client_id = fetchClientIdFromPid(pfd.fd);
 
     if (client_id == 0) {
-        std::cout << "[ERROR] Could not find client for fd " << pfd.fd << std::endl;
+        std::cout << RED << "[ERROR] " << RESET << "Could not find client for fd " << pfd.fd << std::endl;
         return false; // Signal to remove this fd
     }
 
-    std::cout << "[DEBUG] Handling client message" << " CLIENT ID: " << client_id << std::endl;
+    std::cout << BLUE << "[DBG] " << RESET << "[ID:" << client_id << "] Received client input" << std::endl;
 
     if (client_id > 0) {
         Client *client = _clients[client_id];
@@ -116,6 +117,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             if (commands[i].substr(0, 4) == "PASS") { 
                 client->setBuffer(commands[i]); 
                 Message newMessage(client);
+                newMessage.printMessageDebug(client_id);
                 handlePassCommand(newMessage);
                 break; 
             }
@@ -124,7 +126,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
         for (size_t i = 0; i < commands.size(); i++) {
             client->setBuffer(commands[i]); // Set message buffer for parsing
             Message newMessage(client);
-            //newMessage.printMessageDebug();
+            newMessage.printMessageDebug(client_id);
             switch (newMessage.getCommandType()) {
                 case IRC::CMD_NICK: handleNickCommand(newMessage); break;
                 case IRC::CMD_USER: handleUserCommand(newMessage); break;
@@ -206,8 +208,8 @@ void Server::removeClient(unsigned int client_id) {
     _clients.erase(it);
     delete client; // Delete the client object
     
-    std::cout << "[LOG] [ID:" << client_id << "] Client fully removed from server" << std::endl;
-    std::cout << "[DEBUG] Number of clients after deletion: " << _clients.size() << std::endl;
+    std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << client_id << "] Client fully removed from server" << std::endl;
+    std::cout << BLUE << "[DBG] " << RESET << "[SERVER] " << "Number of clients after deletion: " << _clients.size() << std::endl;
 }
 
 void Server::tryRegister(Client* client) {

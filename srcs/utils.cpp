@@ -1,16 +1,19 @@
 #include "IRC.hpp"
 
 void error(const std::string& errorMsg, bool throws, bool usesErrno) {
-    std::string fullMessage = errorMsg;
+    std::string formatMessage;
 
     if (usesErrno) { 
-        fullMessage += ": " + std::string(strerror(errno));
+        formatMessage += "[" + std::string(strerror(errno)) + "]: ";
+    }
+    else {
+        formatMessage += "[No errno]: ";
     }
 
     if (throws)
-        throw std::runtime_error("[ERROR] " + fullMessage);
+        throw std::runtime_error(std::string(RED) + "[ERROR] " + formatMessage + std::string(RESET) + errorMsg);
     else
-        std::cerr << "[WARNING] " + fullMessage << std::endl;
+        std::cerr << RED << "[WARNING] " << formatMessage << RESET << errorMsg << std::endl;
 }
 
 int stringToInt(const std::string& str) {

@@ -23,7 +23,7 @@ void Server::handleCapCommand(Message &message) {
     } 
     else if (capSubcommand == "END") { 
 		std::stringstream ss;
-		ss << "[LOG] [ID:" << message.getSenderId() << "] Capability negotiation ended for the client" << std::endl;
+		ss << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] Capability negotiation ended for the client" << std::endl;
 		std::cout << ss.str();
 
         _clients[message.getSenderId()]->setCapNegotiationStatus(true);
@@ -48,7 +48,7 @@ void Server::handleNickCommand(Message &message) {
     // Nick uniqueness check
     if (checkUniqueNick(nickname)) {
         client->setNickname(nickname);
-        std::cout << "[LOG] [ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
+        std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
                   << client->getNickname() << std::endl;
     } else {
         // 433 ERR_NICKNAMEINUSE
@@ -168,14 +168,14 @@ void Server::handlePassCommand(Message &message) {
 		std::string response = ":" + SERVER_NAME + " 464 " + nickname + " :Password incorrect\r\n";
 		_clients[message.getSenderId()]->receiveMessage(response);
 		std::stringstream ss;
-		ss << "[LOG] [ID:" << message.getSenderId() << "] PASS command handled, incorrect password" << std::endl;
+		ss << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] PASS command handled, incorrect password" << std::endl;
 		std::cout << ss.str();
 
 	}
 	else {
 		_clients[message.getSenderId()]->setAuthenticated(true);
 		std::stringstream ss;
-		ss << "[LOG] [ID:" << message.getSenderId() << "] PASS command handled, client authenticated" << std::endl;
+		ss << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] PASS command handled, client authenticated" << std::endl;
 		std::cout << ss.str();
 	}
 }
@@ -192,7 +192,7 @@ void Server::handleUserCommand(Message &message) {
     // USER has 4 params (username, hostname, server, realname),
     // but you only strictly need the first param as "username."
     client->setUsername(message.getParams()[0]);
-    std::cout << "[LOG] [ID:" << message.getSenderId() << "] USER command handled, username saved as " 
+    std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] USER command handled, username saved as " 
               << client->getUsername() << std::endl;
 
     // After setting a username, attempt registration

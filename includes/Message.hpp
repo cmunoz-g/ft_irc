@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 12:01:43 by cmunoz-g          #+#    #+#             */
-/*   Updated: 2025/02/11 09:56:57 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/05 12:25:43 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ public:
 	unsigned int			getSenderId() const;
 	std::string				getReceiverChannel() const;
 
-	void	printMessageDebug();
+	void	printMessageDebug(int client_id) const;
 	
 	static void    initCommandMap(void);
 };

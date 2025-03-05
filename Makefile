@@ -6,11 +6,11 @@
 #    By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/11/25 10:27:14 by juramos           #+#    #+#              #
-#    Updated: 2025/02/27 11:30:51 by cmunoz-g         ###   ########.fr        #
+#    Updated: 2025/03/05 11:43:38 by cmunoz-g         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME = irc
+NAME = ircserv
 CXX = clang++
 CXXFLAGS = -Wall -Werror -Wextra -std=c++98
 FOLDER = srcs/
