@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 09:51:49 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/05 11:01:26 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,7 +167,7 @@ bool Channel::setTopic(Client* client, const std::string& newTopic) {
 }
 
 bool Channel::addClient(Client* client) {
-    if (getUserCount() >= getUserLimit())
+    if (getUserLimit() > 0 && (getUserCount() >= getUserLimit()))
         return false;
     
     _clients.insert(std::make_pair(client->getId(), client));

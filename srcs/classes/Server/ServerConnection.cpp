@@ -124,7 +124,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
         for (size_t i = 0; i < commands.size(); i++) {
             client->setBuffer(commands[i]); // Set message buffer for parsing
             Message newMessage(client);
-            newMessage.printMessageDebug();
+            //newMessage.printMessageDebug();
             switch (newMessage.getCommandType()) {
                 case IRC::CMD_NICK: handleNickCommand(newMessage); break;
                 case IRC::CMD_USER: handleUserCommand(newMessage); break;

@@ -201,99 +201,135 @@ void Server::handleUserCommand(Message &message) {
 
 
 void Server::handleJoinCommand(Message &message) {
+    // If there's no channel parameter, Irssi often sends an empty JOIN in auto-join scenarios.
+    // Just return in that case.
     if (message.getParams().empty() || message.getParams()[0].empty()) {
-        return; // No parameters, ignore (needed for Irssi auto-join)
+        return;
     }
 
+    // The first parameter of JOIN can be a comma-separated list of channel names.
     std::string channelsParam = message.getParams()[0];
     std::vector<std::string> channels;
-    std::stringstream ss(channelsParam);
-    std::string channelName;
-
-    // Split input by comma for multiple channels
-    while (std::getline(ss, channelName, ',')) {
-        channels.push_back(channelName);
+    {
+        std::stringstream ss(channelsParam);
+        std::string chan;
+        while (std::getline(ss, chan, ',')) {
+            channels.push_back(chan);
+        }
     }
 
     Client *client = _clients[message.getSenderId()];
 
+    // For channels that require a key (+k), IRC puts the key in the second JOIN param.
+    // e.g. JOIN #channel password
+    std::string providedKey;
+    if (message.getParams().size() > 1) {
+        providedKey = message.getParams()[1];
+    }
+
+    // Process each channel
     for (size_t i = 0; i < channels.size(); i++) {
         std::string channelName = channels[i];
 
-        // Reject channel names such as # or &
-        if (channelName.length() < 2) {
-            client->receiveMessage(":" + SERVER_NAME + " 403 " + client->getNickname() + " " + channelName + " :No such channel\r\n");
+        // Check on channel name. Typically an IRC channel starts with '#' or '&', e.g. "#mychan"
+        if (channelName.size() < 2 || (channelName[0] != '#' && channelName[0] != '&')) {
+            // 403 ERR_NOSUCHCHANNEL
+            std::string errMsg = ":" + SERVER_NAME + " 403 " + client->getNickname() + " " 
+                                 + channelName + " :No such channel\r\n";
+            client->receiveMessage(errMsg);
             continue;
         }
 
-        // Check if the channel exists
+        // If channel doesn't exist yet, create it
         if (_channels.find(channelName) == _channels.end()) {
-            // Channel does NOT exist, create it
-            _channels[channelName] = new Channel(channelName, client);
-            _channels[channelName]->addClient(client);
-            _channels[channelName]->addOperator(client);
+            Channel *newChannel = new Channel(channelName, client);
+            _channels[channelName] = newChannel;
 
-            // Handle password-protected channels (`+k`)
-            if (message.getParams().size() > 1) {
-                _channels[channelName]->setPassword(message.getParams()[1]);
-                _channels[channelName]->setMode(IRC::MODE_K, true);
+            // If the user provided a key for a brand-new channel, set +k
+            if (!providedKey.empty()) {
+                newChannel->setPassword(providedKey);
+                newChannel->setMode(IRC::MODE_K, true);
             }
 
-            // Send channel info
-            std::string topic_response = ":" + SERVER_NAME + " 331 " + client->getNickname() + " " + channelName + " :No topic is set\r\n";
-            client->receiveMessage(topic_response);
-            _channels[channelName]->sendNames(client);
-            std::string mode_response = ":" + SERVER_NAME + " 324 " + client->getNickname() + " " + channelName + " +o\r\n";
-            client->receiveMessage(mode_response);
-        } 
+            // Construct the JOIN message with a full prefix
+            std::string joinMsg = ":" + client->getNickname() + "!" 
+                + client->getUsername() + "@" + SERVER_NAME
+                + " JOIN " + channelName + "\r\n";
+
+            client->receiveMessage(joinMsg);
+            newChannel->broadcastMessage(joinMsg, client);
+
+            // RPL_NOTOPIC (331) if no topic is set, otherwise RPL_TOPIC (332).
+            if (newChannel->getTopic().empty()) {
+                std::string noTopic = ":" + SERVER_NAME + " 331 " + client->getNickname()
+                    + " " + channelName + " :No topic is set\r\n";
+                client->receiveMessage(noTopic);
+            } else {
+                std::string topicReply = ":" + SERVER_NAME + " 332 " + client->getNickname()
+                    + " " + channelName + " :" + newChannel->getTopic() + "\r\n";
+                client->receiveMessage(topicReply);
+            }
+
+            // Send user list
+            newChannel->sendNames(client);
+        }
         else {
+            // Channel already exists
             Channel *channel = _channels[channelName];
 
-            // Check if user is already in the channel
+            // If already in the channel, 443 ERR_USERONCHANNEL
             if (channel->hasClient(client)) {
-                std::string response = ":" + SERVER_NAME + " 443 " + client->getNickname() + " " + channelName + " :is already on channel\r\n";
-                client->receiveMessage(response);
+                std::string errMsg = ":" + SERVER_NAME + " 443 " + client->getNickname() 
+                                     + " " + channelName + " :is already on channel\r\n";
+                client->receiveMessage(errMsg);
                 continue;
             }
 
-            // Check invite-only mode (`+i`)
+            // If invite-only (+i) and user is not invited, 473 ERR_INVITEONLYCHAN
             if (channel->hasMode(IRC::MODE_I) && !channel->isInvitedClient(client)) {
-                std::string response = ":" + SERVER_NAME + " 473 " + client->getNickname() + " " + channelName + " :Cannot join channel (+i)\r\n";
-                client->receiveMessage(response);
+                std::string errMsg = ":" + SERVER_NAME + " 473 " + client->getNickname()
+                                     + " " + channelName + " :Cannot join channel (+i)\r\n";
+                client->receiveMessage(errMsg);
                 continue;
             }
 
-            // Check password-protected channels (`+k`)
+            // If +k is set, verify the correct key
             if (channel->hasMode(IRC::MODE_K)) {
-                if (message.getParams().size() < 2 || channel->getPassword() != message.getParams()[1]) {
-                    std::string response = ":" + SERVER_NAME + " 475 " + client->getNickname() + " " + channelName + " :Cannot join channel (+k)\r\n";
-                    client->receiveMessage(response);
+                if (providedKey.empty() || providedKey != channel->getPassword()) {
+                    std::string errMsg = ":" + SERVER_NAME + " 475 " + client->getNickname()
+                                         + " " + channelName + " :Cannot join channel (+k)\r\n";
+                    client->receiveMessage(errMsg);
                     continue;
                 }
             }
 
-            // Check if channel has a user limit (`+l`)
+            // If +l is set (limit) and channel->addClient(client) fails, 471 ERR_CHANNELISFULL
             if (!channel->addClient(client)) {
-                std::string response = ":" + SERVER_NAME + " 471 " + client->getNickname() + " " + channelName + " :Cannot join channel (+l)\r\n";
-                client->receiveMessage(response);
+                std::string errMsg = ":" + SERVER_NAME + " 471 " + client->getNickname()
+                                     + " " + channelName + " :Cannot join channel (+l)\r\n";
+                client->receiveMessage(errMsg);
                 continue;
             }
 
-            // Send join confirmation
-            std::string joinMsg = ":" + client->getNickname() + " JOIN " + channelName + "\r\n";
+            // Successful join
+            std::string joinMsg = ":" + client->getNickname() + "!" 
+                + client->getUsername() + "@" + SERVER_NAME
+                + " JOIN " + channelName + "\r\n";
             client->receiveMessage(joinMsg);
             channel->broadcastMessage(joinMsg, client);
 
-            // Send topic information
-            std::string topic_response;
-            if (channel->hasMode(IRC::MODE_T)) {
-                topic_response = ":" + SERVER_NAME + " 332 " + client->getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+            // If the channel has a topic, send 332; otherwise 331
+            if (!channel->getTopic().empty()) {
+                std::string topicReply = ":" + SERVER_NAME + " 332 " + client->getNickname()
+                    + " " + channelName + " :" + channel->getTopic() + "\r\n";
+                client->receiveMessage(topicReply);
             } else {
-                topic_response = ":" + SERVER_NAME + " 331 " + client->getNickname() + " " + channelName + " :No topic is set\r\n";
+                std::string noTopic = ":" + SERVER_NAME + " 331 " + client->getNickname()
+                    + " " + channelName + " :No topic is set\r\n";
+                client->receiveMessage(noTopic);
             }
-            client->receiveMessage(topic_response);
 
-            // Send user list
+            // Finally, send the user list
             channel->sendNames(client);
         }
     }
