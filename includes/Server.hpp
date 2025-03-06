@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/04 12:47:54 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 10:19:13 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ public:
     void handleNickCommand(Message &message);
     void handleModeCommand(Message &message);
     void handlePingCommand(Message &message);
-    void handlePassCommand(Message &message);
+    bool handlePassCommand(Message &message);
     void handleUserCommand(Message &message);
     void handleJoinCommand(Message &message);
     void handlePrivmsgCommand(Message &message);

@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/05 12:36:56 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:01:52 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,5 +51,6 @@ static std::string SERVER_NAME = "irc.localhost";
 int		stringToInt(const std::string& str);
 bool	isValidMode(char mode, bool isChannelMode);
 void 	error(const std::string& errorMsg, bool throws, bool usesErrno);
+bool 	isValidNick(const std::string &nick);
 
 #endif

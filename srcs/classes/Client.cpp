@@ -6,17 +6,17 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/05 12:37:05 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 11:06:23 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
 Client::Client(int socket, unsigned int id): _socket(socket), _nickname(""),
-	_username(""), _buffer(""), _authenticated(false), _registered(false), _id(id) {}
+	_username(""), _buffer(""), _authenticated(false), _registered(false), _passwordAttempts(0), _id(id) {}
 
 Client::Client(): _socket(-1), _nickname(""),
-	_username(""), _buffer(""), _authenticated(false), _registered(false), _id(0) {} // 0 is set as default id
+	_username(""), _buffer(""), _authenticated(false), _registered(false), _passwordAttempts(0), _id(0) {} // 0 is set as default id
 
 Client::~Client() {}
 
@@ -271,6 +271,13 @@ std::string Client::getModes() const {
     return modes;
 }
 
+void Client::addPasswordAttempt() {
+    _passwordAttempts++;
+}
+
+unsigned int Client::getPasswordAttempts() const {
+    return _passwordAttempts;
+}
 
 //
 

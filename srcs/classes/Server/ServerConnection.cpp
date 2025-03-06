@@ -116,10 +116,14 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             client->setBuffer(commands[i]); 
             Message newMessage(client);
             newMessage.printMessageDebug(client_id);
-            handlePassCommand(newMessage);
+            if (!handlePassCommand(newMessage))
+                client->addPasswordAttempt();
             break; 
         }
     }
+
+    if (client->getPasswordAttempts() > 2)
+        return false; // Disconnect client after 3 failed password attempts
 
     // Process all commands
     for (size_t i = 0; i < commands.size(); i++) {
@@ -134,6 +138,8 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             cmd != IRC::CMD_CAP &&
             cmd != IRC::CMD_PASS) {
                 // Send IRC error reply 451: "You have not registered"
+                if (cmd == IRC::CMD_UNKNOWN)
+                    continue;
                 std::string response = ":" + SERVER_NAME + " 451 * :You have not registered\r\n";
                 client->receiveMessage(response);
                 continue; // Skip processing this command

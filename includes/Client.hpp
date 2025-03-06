@@ -14,6 +14,7 @@ private:
     bool                _capNegotiation; // ha mandado CAP END
     bool                _authenticated; // ha mandado PASS correctamente
     bool                _registered;
+    unsigned int        _passwordAttempts;
     unsigned int        _id;
     std::vector<unsigned int> _modes;
     std::map<const std::string, Channel*> _channels;   // Canales a los que está unido
@@ -39,6 +40,7 @@ public:
     bool                isCapNegotiationDone() const;
 	std::string const   getBuffer() const;
     unsigned int        getId() const;
+    unsigned int        getPasswordAttempts() const;
     
     // Setters básicos
     void        setNickname(const std::string& nickname);
@@ -47,6 +49,7 @@ public:
     void        setCapNegotiationStatus(bool status);
     void        setBuffer(const std::string& buffer);
     void        setRegistered(bool status);
+    void        addPasswordAttempt(void);
 
     // Buffer para mensajes parciales
     void        appendToBuffer(const std::string& data);

@@ -37,25 +37,40 @@ void Server::handleCapCommand(Message &message) {
 
 void Server::handleNickCommand(Message &message) {
     Client *client = _clients[message.getSenderId()];
-    std::string nickname = message.getParams()[0];
-
+    
     if (!_password.empty() && !client->isAuthenticated()) {
-        // They haven't done PASS (or used the wrong PASS) yet.
-        client->receiveMessage(":" + SERVER_NAME + " 451 " + nickname + " :You have not registered\r\n");
+        // They haven't done PASS yet.
+        client->receiveMessage(":" + SERVER_NAME + " 451 * :You have not registered\r\n");
+        return;
+    }
+    
+    if (message.getParams().empty()) {
+        // 431 ERR_NONICKNAMEGIVEN
+        std::string response = ":" + SERVER_NAME + " 431 " + client->getNickname() + " :No nickname given\r\n";
+        client->receiveMessage(response);
+        return;
+    }
+    
+    std::string nickname = message.getParams()[0]; 
+    // Validate nickname
+    if (!isValidNick(nickname)) {
+        // 432 ERR_ERRONEUSNICKNAME
+        std::string response = ":" + SERVER_NAME + " 432 " + client->getNickname() + " " + nickname + " :Erroneous nickname\r\n";
+        client->receiveMessage(response);
         return;
     }
 
     // Nick uniqueness check
     if (checkUniqueNick(nickname)) {
         client->setNickname(nickname);
-        std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
+        std::cout << YELLOW << "[LOG] " << RESET 
+                  << "[ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
                   << client->getNickname() << std::endl;
     } else {
         // 433 ERR_NICKNAMEINUSE
         std::string currentNick = client->getNickname().empty() ? "*" : client->getNickname();
         std::string triedNick = nickname;
-        std::string response = ":" + SERVER_NAME + " 433 "
-            + currentNick + " " + triedNick + " :Nickname is already in use\r\n";
+        std::string response = ":" + SERVER_NAME + " 433 " + currentNick + " " + triedNick + " :Nickname is already in use\r\n";
         client->receiveMessage(response);
         return;
     }
@@ -153,36 +168,44 @@ void Server::handlePingCommand(Message &message) {
 	_clients[message.getSenderId()]->receiveMessage(response);
 }
 
-void Server::handlePassCommand(Message &message) {
-	std::string nickname = _clients[message.getSenderId()]->getNickname();
+bool Server::handlePassCommand(Message &message) {
+    Client *client = _clients[message.getSenderId()];
+	std::string nickname = client->getNickname().empty() ? "*" : client->getNickname();
 
-	if (_clients[message.getSenderId()]->isAuthenticated()) {
+	if (client->isAuthenticated()) {
 		std::string response = ":" + SERVER_NAME + " 462 " + nickname + " :You may not reregister\r\n";
-		_clients[message.getSenderId()]->receiveMessage(response);
+		client->receiveMessage(response);
 	}
 	else if (message.getParams().empty()) {
 		std::string response = ":" + SERVER_NAME + " 461 " + nickname + " PASS :Not enough parameters\r\n";
-		_clients[message.getSenderId()]->receiveMessage(response);
+		client->receiveMessage(response);
 	}
 	else if (message.getParams()[0] != getPassword()) {
 		std::string response = ":" + SERVER_NAME + " 464 " + nickname + " :Password incorrect\r\n";
-		_clients[message.getSenderId()]->receiveMessage(response);
+		client->receiveMessage(response);
 		std::stringstream ss;
 		ss << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] PASS command handled, incorrect password" << std::endl;
 		std::cout << ss.str();
-
+        return false;
 	}
 	else {
-		_clients[message.getSenderId()]->setAuthenticated(true);
+		client->setAuthenticated(true);
 		std::stringstream ss;
 		ss << YELLOW << "[LOG] " << RESET << "[ID:" << message.getSenderId() << "] PASS command handled, client authenticated" << std::endl;
 		std::cout << ss.str();
 	}
+    return true;
 }
 
 void Server::handleUserCommand(Message &message) {
     Client *client = _clients[message.getSenderId()];
 
+    if (client->isRegistered()) {
+        std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
+        client->receiveMessage(":" + SERVER_NAME + " 462 " + nick + " :You may not reregister\r\n");
+        return;
+    }
+    
     if (!_password.empty() && !client->isAuthenticated()) {
         // They haven't done PASS yet.
         client->receiveMessage(":" + SERVER_NAME + " 451 " + client->getNickname() + " :You have not registered\r\n");
