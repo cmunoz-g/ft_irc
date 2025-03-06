@@ -499,6 +499,7 @@ void Server::handleTopicCommand(Message &message) {
 	
 	if (!channel->setTopic(client, newTopic)) {
 		std::string response = ":" + SERVER_NAME + " 482 " + client->getNickname() + " " + channelName + " :You're not channel operator\r\n";
+        client->receiveMessage(response);
 		return;
 	}
 
