@@ -58,6 +58,7 @@ public:
     // Gestión de canales y operadores
     void        joinChannel(Channel *channel);
     void        leaveChannel(const Channel *channel);
+    void        leaveAllChannels();
     bool        isInChannel(const Channel *channel) const;
     void        setOperatorStatus(Channel *channel);
     void        removeOperatorStatus(const Channel *channel);

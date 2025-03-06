@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/06 11:06:23 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 13:12:02 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,6 +114,14 @@ void Client::leaveChannel(const Channel *channel) {
     }
 
     _channels.erase(it);
+}
+
+void Client::leaveAllChannels() {
+    while (!_channels.empty()) {
+        Channel *channel = _channels.begin()->second;
+        leaveChannel(channel);   
+        channel->removeClient(this);
+    }
 }
 
 

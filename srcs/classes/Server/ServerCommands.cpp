@@ -230,6 +230,12 @@ void Server::handleJoinCommand(Message &message) {
         return;
     }
 
+    Client *client = _clients[message.getSenderId()];
+    if (message.getParams().size() == 1 && message.getParams()[0] == "0") {
+        client->leaveAllChannels();
+        return;
+    }
+
     // The first parameter of JOIN can be a comma-separated list of channel names.
     std::string channelsParam = message.getParams()[0];
     std::vector<std::string> channels;
@@ -240,8 +246,6 @@ void Server::handleJoinCommand(Message &message) {
             channels.push_back(chan);
         }
     }
-
-    Client *client = _clients[message.getSenderId()];
 
     // For channels that require a key (+k), IRC puts the key in the second JOIN param.
     // e.g. JOIN #channel password
@@ -295,6 +299,7 @@ void Server::handleJoinCommand(Message &message) {
 
             // Send user list
             newChannel->sendNames(client);
+            client->joinChannel(newChannel);
         }
         else {
             // Channel already exists
@@ -354,6 +359,7 @@ void Server::handleJoinCommand(Message &message) {
 
             // Finally, send the user list
             channel->sendNames(client);
+            client->joinChannel(channel);
         }
     }
 }

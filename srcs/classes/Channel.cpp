@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/05 11:01:26 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 13:12:10 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ void Channel::setMode(IRC::ChannelMode mode, bool enabled) {
 
 void Channel::setModesFromString(const std::string& modeString, const std::vector<std::string>& params, Client* client) {
     bool adding = true;
-    size_t paramIndex = 0;
+    size_t paramIndex = 2;
 
     for (size_t i = 0; i < modeString.length(); ++i) {
         char c = modeString[i];
