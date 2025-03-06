@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/27 09:41:29 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 21:45:16 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ private:
 
     // Manejo de modos (requeridos por el subject)
     void setMode(IRC::ChannelMode mode, bool enabled = true);
-    void setModesFromString(const std::string& modeString, const std::vector<std::string>& params, Client *client);
+    bool setModesFromString(const std::string& modeString, const std::vector<std::string>& params);
     std::string getModes() const;
     bool hasMode(IRC::ChannelMode mode) const;
     void setPassword(const std::string& pass);

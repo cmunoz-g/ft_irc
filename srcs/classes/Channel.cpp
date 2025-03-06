@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/06 20:29:18 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/06 21:45:06 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ void Channel::setMode(IRC::ChannelMode mode, bool enabled) {
     }
 }
 
-void Channel::setModesFromString(const std::string& modeString, const std::vector<std::string>& params, Client* client) {
+bool Channel::setModesFromString(const std::string& modeString, const std::vector<std::string>& params) {
     bool adding = true;
     size_t paramIndex = 2;
 
@@ -118,7 +118,19 @@ void Channel::setModesFromString(const std::string& modeString, const std::vecto
                     _userLimit = stringToInt(params[paramIndex++]);
                 } 
                 else if (modeEnum == IRC::MODE_O && paramIndex < params.size()) {
-                    addOperator(client); // Add operator
+                    Client* targetClient = NULL;
+                    for (std::map<unsigned int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+                        if (it->second->getNickname() == params[paramIndex]) {
+                            targetClient = it->second;
+                            break;
+                        }
+                    }
+
+                    if (targetClient) {
+                        addOperator(targetClient);
+                    }
+                    else
+                        return false;
                 }
             } else { // Removing modes
                 std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), modeEnum);
@@ -134,11 +146,24 @@ void Channel::setModesFromString(const std::string& modeString, const std::vecto
                     _userLimit = 0;
                 } 
                 else if (modeEnum == IRC::MODE_O && paramIndex < params.size()) {
-                    removeOperator(client); // Remove operator
+                    Client* targetClient = NULL;
+                    for (std::map<unsigned int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+                        if (it->second->getNickname() == params[paramIndex]) {
+                            targetClient = it->second;
+                            break;
+                        }
+                    }
+
+                    if (targetClient) {
+                        removeOperator(targetClient);
+                    }
+                    else
+                        return false;
                 }
             }
         }
     }
+    return true;
 }
 
 
@@ -202,9 +227,7 @@ void Channel::removeInvitedClient(Client *client) {
 }
 
 void Channel::addOperator(Client* client) {
-    if (!(getUserCount() >= getUserLimit())) {
-        _operators.insert(std::make_pair(client->getId(), client));
-    }
+    _operators.insert(std::make_pair(client->getId(), client));
 }
 
 void Channel::removeOperator(Client* client) {

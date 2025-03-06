@@ -115,10 +115,13 @@ void Server::handleModeCommand(Message &message) {
                 }
 
                 if (channel->isOperator(client)) {
-                    channel->setModesFromString(modeString, message.getParams(), client);
-                    
-                    response = ":" + client->getNickname() + "!" + client->getUsername() + "@" + SERVER_NAME + 
-                               " MODE " + target + " " + modeString + "\r\n";
+                    if (!channel->setModesFromString(modeString, message.getParams())) {
+                        response = ":" + SERVER_NAME + " 441 " + nickname + " " + target + " :They aren't on that channel\r\n";
+                    }
+                    else {
+                        response = ":" + client->getNickname() + "!" + client->getUsername() + "@" + SERVER_NAME + 
+                                   " MODE " + target + " " + modeString + "\r\n";
+                    }
                 } else {
                     response = ":" + SERVER_NAME + " 482 " + nickname + " " + target + " :You're not a channel operator\r\n";
                 }
@@ -300,6 +303,7 @@ void Server::handleJoinCommand(Message &message) {
             // Send user list
             newChannel->sendNames(client);
             client->joinChannel(newChannel);
+            client->setOperatorStatus(newChannel);
         }
         else {
             // Channel already exists
@@ -426,11 +430,14 @@ void Server::handleInviteCommand(Message &message) {
 
 	if (_channels.find(channelName) == _channels.end()) {
 		std::string response = ":" + SERVER_NAME + " 403 " + inviter->getNickname() + " " + channelName + " :No such channel\r\n";
+        inviter->receiveMessage(response);
+		return;
 	}
 
 	Channel *channel = _channels[channelName];
 	if (!channel->hasClient(inviter)) {
 		std::string response = ":" + SERVER_NAME + " 442 " + inviter->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+        inviter->receiveMessage(response);
 		return;
 	}
 	
@@ -538,6 +545,7 @@ void Server::handleKickCommand(Message &message) {
         return;
 	}
 
+    std::cout << "|" << targetName << "|" << std::endl;
 	Client *target = NULL;
 	std::map<unsigned int, Client*>::iterator it = _clients.begin();
 	while (it != _clients.end()) {
@@ -556,10 +564,10 @@ void Server::handleKickCommand(Message &message) {
 
 	std::string kickResponse = ":" + kicker->getNickname() + "!" + kicker->getUsername() + "@" + SERVER_NAME + " KICK " + channelName + " " + targetName + " :" + reason + "\r\n";
 	channel->broadcastMessage(kickResponse, NULL);
-	target->leaveChannel(channel);
-	channel->removeClient(target); 
-	
 	target->receiveMessage(kickResponse);
+	channel->removeClient(target); 
+	target->leaveChannel(channel);
+	
 }
 
 void Server::handleQuitCommand(Message &message) {
