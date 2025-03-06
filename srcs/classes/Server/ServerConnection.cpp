@@ -96,60 +96,74 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
 
     std::cout << BLUE << "[DBG] " << RESET << "[ID:" << client_id << "] Received client input" << std::endl;
 
-    if (client_id > 0) {
-        Client *client = _clients[client_id];
-      
-        // Append data to client's buffer
-        client->appendToBuffer(buffer);
-        std::string buf = client->getBuffer();
-        size_t pos;
-        
+    Client *client = _clients[client_id];
 
-        // Store all commands in a vector if irssi sends several commands together
-        std::vector<std::string> commands;
-        while ((pos = buf.find("\r\n")) != std::string::npos) {
-            commands.push_back(buf.substr(0, pos)); // Store the full command
-            buf.erase(0, pos + 2);
-        }
+    // Append data to client's buffer
+    client->appendToBuffer(buffer);
+    std::string buf = client->getBuffer();
+    size_t pos;
 
-        // Process /PASS first
-        for (size_t i = 0; i < commands.size(); i++) {
-            if (commands[i].substr(0, 4) == "PASS") { 
-                client->setBuffer(commands[i]); 
-                Message newMessage(client);
-                newMessage.printMessageDebug(client_id);
-                handlePassCommand(newMessage);
-                break; 
-            }
-        }
-
-        for (size_t i = 0; i < commands.size(); i++) {
-            client->setBuffer(commands[i]); // Set message buffer for parsing
-            Message newMessage(client);
-            newMessage.printMessageDebug(client_id);
-            switch (newMessage.getCommandType()) {
-                case IRC::CMD_NICK: handleNickCommand(newMessage); break;
-                case IRC::CMD_USER: handleUserCommand(newMessage); break;
-                case IRC::CMD_CAP: handleCapCommand(newMessage); break;
-                case IRC::CMD_PRIVMSG: handlePrivmsgCommand(newMessage); break;
-                case IRC::CMD_JOIN: handleJoinCommand(newMessage); break;
-                case IRC::CMD_INVITE: handleInviteCommand(newMessage); break;
-                case IRC::CMD_TOPIC: handleTopicCommand(newMessage); break;
-                case IRC::CMD_MODE: handleModeCommand(newMessage); break;
-                case IRC::CMD_PING: handlePingCommand(newMessage); break;
-                case IRC::CMD_KICK: handleKickCommand(newMessage); break;
-                case IRC::CMD_QUIT:
-                    handleQuitCommand(newMessage);
-                    return false;
-                    break;
-                default: break;
-            }
-        }
-
-        client->setBuffer(buf);
+    // Extract complete commands delimited by "\r\n"
+    std::vector<std::string> commands;
+    while ((pos = buf.find("\r\n")) != std::string::npos) {
+        commands.push_back(buf.substr(0, pos));
+        buf.erase(0, pos + 2);
     }
 
-    return true; // Client is still connected
+    // Process PASS command first, Irssi sends PASS after NICK and USER
+    for (size_t i = 0; i < commands.size(); i++) {
+        if (commands[i].substr(0, 4) == "PASS") { 
+            client->setBuffer(commands[i]); 
+            Message newMessage(client);
+            newMessage.printMessageDebug(client_id);
+            handlePassCommand(newMessage);
+            break; 
+        }
+    }
+
+    // Process all commands
+    for (size_t i = 0; i < commands.size(); i++) {
+        client->setBuffer(commands[i]); // Set message buffer for parsing
+        Message newMessage(client);
+        IRC::CommandType cmd = newMessage.getCommandType();
+        
+        // If client is not registered, allow only PASS, NICK, USER, and CAP commands.
+        if (!client->isRegistered()) {
+            if (cmd != IRC::CMD_NICK &&
+            cmd != IRC::CMD_USER &&
+            cmd != IRC::CMD_CAP &&
+            cmd != IRC::CMD_PASS) {
+                // Send IRC error reply 451: "You have not registered"
+                std::string response = ":" + SERVER_NAME + " 451 * :You have not registered\r\n";
+                client->receiveMessage(response);
+                continue; // Skip processing this command
+            }
+        }
+
+        newMessage.printMessageDebug(client_id);
+        
+        // Process allowed commands
+        switch (cmd) {
+            case IRC::CMD_NICK:    handleNickCommand(newMessage);    break;
+            case IRC::CMD_USER:    handleUserCommand(newMessage);    break;
+            case IRC::CMD_CAP:     handleCapCommand(newMessage);     break;
+            case IRC::CMD_PRIVMSG: handlePrivmsgCommand(newMessage); break;
+            case IRC::CMD_JOIN:    handleJoinCommand(newMessage);    break;
+            case IRC::CMD_INVITE:  handleInviteCommand(newMessage);  break;
+            case IRC::CMD_TOPIC:   handleTopicCommand(newMessage);   break;
+            case IRC::CMD_MODE:    handleModeCommand(newMessage);    break;
+            case IRC::CMD_PING:    handlePingCommand(newMessage);    break;
+            case IRC::CMD_KICK:    handleKickCommand(newMessage);    break;
+            case IRC::CMD_QUIT:
+                handleQuitCommand(newMessage);
+                return false; // Client should be removed after QUIT
+            default: break;
+        }
+    }
+
+    // Save any leftover partial data back to the client's buffer
+    client->setBuffer(buf);
+    return true; // Client remains connected
 }
 
 bool Server::checkUniqueNick(std::string nick) { // Test
