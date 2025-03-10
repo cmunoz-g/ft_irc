@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/06 13:12:02 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:38:49 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,8 @@ std::string const	Client::getNickname() const { return _nickname; }
 std::string const	Client::getUsername() const { return _username; }
 
 unsigned int	Client::getId() const { return _id; }
+
+std::map<const std::string, Channel*> Client::getChannels() const {return _channels; }
 
 //
 bool	Client::isAuthenticated() const { return _authenticated; }

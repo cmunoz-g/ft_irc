@@ -94,7 +94,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
         return false; // Signal to remove this fd
     }
 
-    std::cout << BLUE << "[DBG] " << RESET << "[ID:" << client_id << "] Received client input" << std::endl;
+    std::cout << BLUE << "[INP] " << RESET << "[ID:" << client_id << "] Received client input" << std::endl;
 
     Client *client = _clients[client_id];
 
@@ -232,7 +232,7 @@ void Server::removeClient(unsigned int client_id) {
     delete client; // Delete the client object
     
     std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << client_id << "] Client fully removed from server" << std::endl;
-    std::cout << BLUE << "[DBG] " << RESET << "[SERVER] " << "Number of clients after deletion: " << _clients.size() << std::endl;
+    std::cout << YELLOW << "[LOG] " << RESET << "[SERVER] " << "Number of clients after deletion: " << _clients.size() << std::endl;
 }
 
 void Server::tryRegister(Client* client) {

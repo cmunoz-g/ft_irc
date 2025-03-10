@@ -41,6 +41,7 @@ public:
 	std::string const   getBuffer() const;
     unsigned int        getId() const;
     unsigned int        getPasswordAttempts() const;
+    std::map<const std::string, Channel*>   getChannels() const;
     
     // Setters básicos
     void        setNickname(const std::string& nickname);

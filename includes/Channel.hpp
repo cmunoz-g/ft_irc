@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/06 21:45:16 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:39:21 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ private:
     const std::string& getName() const;
     const std::string& getTopic() const;
     const std::string& getPassword() const;
+    std::map<unsigned int, Client*> getClients() const;
     size_t getUserCount() const;
     size_t getUserLimit() const;
     bool isOperator(Client* client) const;

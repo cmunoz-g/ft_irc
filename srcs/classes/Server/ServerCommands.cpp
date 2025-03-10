@@ -46,38 +46,79 @@ void Server::handleNickCommand(Message &message) {
     
     if (message.getParams().empty()) {
         // 431 ERR_NONICKNAMEGIVEN
-        std::string response = ":" + SERVER_NAME + " 431 " + client->getNickname() + " :No nickname given\r\n";
+        std::string response = ":" + SERVER_NAME + " 431 " 
+                             + (client->getNickname().empty() ? "*" : client->getNickname()) 
+                             + " :No nickname given\r\n";
         client->receiveMessage(response);
         return;
     }
     
-    std::string nickname = message.getParams()[0]; 
+    // The user wants to change to this nickname
+    std::string nickname = message.getParams()[0];
+    
     // Validate nickname
     if (!isValidNick(nickname)) {
         // 432 ERR_ERRONEUSNICKNAME
-        std::string response = ":" + SERVER_NAME + " 432 " + client->getNickname() + " " + nickname + " :Erroneous nickname\r\n";
+        std::string response = ":" + SERVER_NAME + " 432 " 
+                             + (client->getNickname().empty() ? "*" : client->getNickname()) 
+                             + " " + nickname + " :Erroneous nickname\r\n";
         client->receiveMessage(response);
         return;
     }
 
     // Nick uniqueness check
-    if (checkUniqueNick(nickname)) {
-        client->setNickname(nickname);
-        std::cout << YELLOW << "[LOG] " << RESET 
-                  << "[ID:" << message.getSenderId() << "] NICK command handled, nickname saved as " 
-                  << client->getNickname() << std::endl;
-    } else {
+    if (!checkUniqueNick(nickname)) {
         // 433 ERR_NICKNAMEINUSE
         std::string currentNick = client->getNickname().empty() ? "*" : client->getNickname();
-        std::string triedNick = nickname;
-        std::string response = ":" + SERVER_NAME + " 433 " + currentNick + " " + triedNick + " :Nickname is already in use\r\n";
+        std::string response = ":" + SERVER_NAME + " 433 " 
+                             + currentNick + " " + nickname 
+                             + " :Nickname is already in use\r\n";
         client->receiveMessage(response);
         return;
     }
 
+    // At this point, the nickname is valid and unique.
+    // If the client already had a nickname, broadcast the change.
+    std::string oldNick = client->getNickname();
+    client->setNickname(nickname);
+
+    broadcastNickChange(client, oldNick, nickname);
+
+    std::cout << YELLOW << "[LOG] " << RESET 
+              << "[ID:" << message.getSenderId() 
+              << "] NICK command handled, nickname saved as " 
+              << client->getNickname() << std::endl;
+
     // After setting a valid nick, attempt registration
     tryRegister(client);
 }
+
+void Server::broadcastNickChange(Client* client, const std::string &oldNick, const std::string &newNick) {
+    if (oldNick.empty() || oldNick == newNick)
+        return;
+
+    // Build the NICK message
+    std::string nickMsg = ":" + oldNick + "!" + client->getUsername() + "@" + SERVER_NAME + " NICK :" + newNick + "\r\n";
+
+    std::map<const std::string, Channel*> channels = client->getChannels(); 
+    
+    std::map<const std::string, Channel*>::iterator it = channels.begin();
+    std::map<unsigned int, Client*> clientsToReceive;
+    for (; it != channels.end(); ++it) {
+        Channel* channel = it->second;
+        if (channel) {
+            std::map<unsigned int, Client*> clientsInChannel = channel->getClients();
+            for (std::map<unsigned int, Client*>::iterator it = clientsInChannel.begin(); it != clientsInChannel.end(); ++it) {
+                clientsToReceive[it->first] = it->second;
+            }
+        }
+    }
+
+    for (std::map<unsigned int, Client*>::iterator it = clientsToReceive.begin(); it != clientsToReceive.end(); ++it) {
+        it->second->receiveMessage(nickMsg);
+    }
+}
+
 
 
 void Server::handleModeCommand(Message &message) {
@@ -367,7 +408,6 @@ void Server::handleJoinCommand(Message &message) {
         }
     }
 }
-
 
 void Server::handlePrivmsgCommand(Message &message) {
 	Client *sender = _clients[message.getSenderId()];

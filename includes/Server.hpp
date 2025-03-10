@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/06 10:19:13 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:38:42 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ public:
     void removeClient(unsigned int client_id);
     unsigned int fetchClientIdFromPid(int fd);
     void tryRegister(Client* client);
+    void broadcastNickChange(Client* client, const std::string &oldNick, const std::string &newNick);
 
     // checks
     bool checkUniqueNick(std::string nick);

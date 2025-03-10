@@ -62,4 +62,3 @@ bool isValidNick(const std::string &nick) {
 
     return true;
 }
-

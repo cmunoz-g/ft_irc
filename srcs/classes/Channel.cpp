@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/06 21:45:06 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:34:19 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,10 @@ std::string Channel::getModes() const {
         modes += "l";
 
     return modes == "+" ? "" : modes;
+}
+
+std::map<unsigned int, Client*> Channel::getClients() const {
+    return _clients;
 }
 
 bool Channel::isOperator(Client* client) const {
