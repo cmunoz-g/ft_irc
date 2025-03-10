@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/04 12:20:26 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 15:18:51 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,18 +38,31 @@ void Server::start() {
     struct pollfd server_pollfd = {_server_fd, POLLIN, 0};
     _pollfds.push_back(server_pollfd);
 
-    while (true) {
+    while (g_running) {
         int ret = poll(_pollfds.data(), _pollfds.size(), -1);
-
+        std::cout << "[DEBUG] poll returned " << ret 
+                  << ", errno=" << errno
+                  << ", g_running=" << g_running
+                  << std::endl;
+    
         if (ret < 0) {
             if (errno == EINTR) {
-                continue; // Ignore interrupts (e.g., signals)
+                // print debug
+                std::cout << "[DEBUG] EINTR => g_running=" << g_running << std::endl;
+                if (!g_running) {
+                    std::cout << "[DEBUG] Breaking out of main loop" << std::endl;
+                    break;
+                }
+                continue;
             }
             error("Fatal error in poll", true, true);
         }
 
         // Iterate in reverse order so we can safely erase closed sockets
         for (size_t i = _pollfds.size(); i-- > 0;) {
+            if (!g_running)
+                break;
+
             if (_pollfds[i].revents & POLLIN) {
                 if (_pollfds[i].fd == _server_fd) {
                     // Accepts new connection
@@ -70,6 +83,23 @@ void Server::start() {
             }
         }
     }
+
+    std::cout << YELLOW << "[LOG] " << RESET << "[SERVER] Server was shut down" << std::endl;
 }
 
+void Server::cleanup() {
+    if (_server_fd >= 0)
+        close(_server_fd);
 
+    for (std::map<unsigned int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+        delete it->second;
+    _clients.clear();
+
+    for (std::map<const std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+        delete it->second;
+    _channels.clear();
+
+    _pollfds.clear();
+
+    std::cout << "[LOG] Server cleanup complete" << std::endl;
+}

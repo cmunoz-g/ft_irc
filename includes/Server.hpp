@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 12:38:42 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:55:38 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,8 @@ public:
 	Server(void);
     Server(int port, const std::string& password);
     ~Server();
+    
+    void cleanup();
 
 	int	getPort() const;
 	const std::string	&getPassword() const;
