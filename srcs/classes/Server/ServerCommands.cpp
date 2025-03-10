@@ -93,34 +93,6 @@ void Server::handleNickCommand(Message &message) {
     tryRegister(client);
 }
 
-void Server::broadcastNickChange(Client* client, const std::string &oldNick, const std::string &newNick) {
-    if (oldNick.empty() || oldNick == newNick)
-        return;
-
-    // Build the NICK message
-    std::string nickMsg = ":" + oldNick + "!" + client->getUsername() + "@" + SERVER_NAME + " NICK :" + newNick + "\r\n";
-
-    std::map<const std::string, Channel*> channels = client->getChannels(); 
-    
-    std::map<const std::string, Channel*>::iterator it = channels.begin();
-    std::map<unsigned int, Client*> clientsToReceive;
-    for (; it != channels.end(); ++it) {
-        Channel* channel = it->second;
-        if (channel) {
-            std::map<unsigned int, Client*> clientsInChannel = channel->getClients();
-            for (std::map<unsigned int, Client*>::iterator it = clientsInChannel.begin(); it != clientsInChannel.end(); ++it) {
-                clientsToReceive[it->first] = it->second;
-            }
-        }
-    }
-
-    for (std::map<unsigned int, Client*>::iterator it = clientsToReceive.begin(); it != clientsToReceive.end(); ++it) {
-        it->second->receiveMessage(nickMsg);
-    }
-}
-
-
-
 void Server::handleModeCommand(Message &message) {
     Client *client = _clients[message.getSenderId()];
     std::string nickname = client->getNickname();

@@ -1,18 +1,5 @@
 #include "IRC.hpp"
 
-unsigned int Server::fetchClientIdFromPid(int fd) {
-    for (std::map<unsigned int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if (it->second->getSocket() == fd) {
-            return it->first;
-        }
-    }
-    std::stringstream ss;
-	ss << "Client with file descriptor " << fd << " not found" << std::endl;
-    error(ss.str(), true, false);
-    return 0; 
-}
-
-
 void Server::setUpServerSocket() {
     _server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_server_fd < 0) {
@@ -175,17 +162,6 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
     return true; // Client remains connected
 }
 
-bool Server::checkUniqueNick(std::string nick) { // Test
-	std::map<unsigned int, Client*>::iterator it = _clients.begin();
-
-	while (it != _clients.end()) {
-		if (it->second->getNickname() == nick)
-			return (false); // not unique
-		++it;
-	}
-	return (true);
-}
-
 void Server::deleteClients() {
 	std::map<unsigned int, Client*>::iterator it = _clients.begin();
 
@@ -233,26 +209,4 @@ void Server::removeClient(unsigned int client_id) {
     
     std::cout << YELLOW << "[LOG] " << RESET << "[ID:" << client_id << "] Client fully removed from server" << std::endl;
     std::cout << YELLOW << "[LOG] " << RESET << "[SERVER] " << "Number of clients after deletion: " << _clients.size() << std::endl;
-}
-
-void Server::tryRegister(Client* client) {
-    if (client->isRegistered()) {
-        return;
-    }
-
-    if (!_password.empty() && !client->isAuthenticated()) { // Additional check
-        return; 
-    }
-
-    if (client->getUsername().empty()) {
-        return;
-    }
-
-    if (client->getNickname().empty()) {
-        return;
-    }
-
-    client->setRegistered(true);
-    std::string response = ":" + SERVER_NAME + " 001 " + client->getNickname() + " :Welcome to the IRC Server!\r\n";
-    client->receiveMessage(response);
 }
