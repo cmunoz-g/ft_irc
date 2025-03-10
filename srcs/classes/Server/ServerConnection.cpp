@@ -124,7 +124,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             cmd != IRC::CMD_USER &&
             cmd != IRC::CMD_CAP &&
             cmd != IRC::CMD_PASS && cmd != IRC::CMD_UNKNOWN) {
-                // Send IRC error reply 451: "You have not registered"
+                // 451 ERR_NOTREGISTERED
                 std::string response = ":" + SERVER_NAME + " 451 * :You have not registered\r\n";
                 client->receiveMessage(response);
                 continue; // Skip processing this command
@@ -146,6 +146,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             case IRC::CMD_PING:    handlePingCommand(newMessage);    break;
             case IRC::CMD_KICK:    handleKickCommand(newMessage);    break;
             case IRC::CMD_UNKNOWN: {
+                // 421 ERR_UNKNOWNCOMMAND
                 std::string response = ":" + SERVER_NAME + " 421 " + client->getNickname() + " " + newMessage.getCommand() + " :Unknown command\r\n";
                 client->receiveMessage(response);
                 break;

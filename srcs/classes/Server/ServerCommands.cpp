@@ -29,7 +29,7 @@ void Server::handleCapCommand(Message &message) {
         _clients[message.getSenderId()]->setCapNegotiationStatus(true);
     } 
     else { 
-        // Unknown CAP command handling
+        // 410 ERR_INVALIDCAPCMD
         std::string response = ":" + SERVER_NAME + " 410 :Unknown CAP subcommand\r\n";
         _clients[message.getSenderId()]->receiveMessage(response);
     }
@@ -39,7 +39,7 @@ void Server::handleNickCommand(Message &message) {
     Client *client = _clients[message.getSenderId()];
     
     if (!_password.empty() && !client->isAuthenticated()) {
-        // They haven't done PASS yet.
+        // 451 ERR_NOTREGISTERED 
         client->receiveMessage(":" + SERVER_NAME + " 451 * :You have not registered\r\n");
         return;
     }
@@ -99,12 +99,14 @@ void Server::handleModeCommand(Message &message) {
     std::string response;
 
     if (message.getParams().empty()) {
+        // 461 ERR_NEEDMOREPARAMS
         response = ":" + SERVER_NAME + " 461 " + nickname + " MODE :Not enough parameters\r\n";
     } else {
         std::string target = message.getParams()[0];
 
         if (target[0] == '#') { // Handling Channel Modes
             if (_channels.find(target) == _channels.end()) {
+                // 403 ERR_NOSUCHCHANNEL
                 response = ":" + SERVER_NAME + " 403 " + nickname + " " + target + " :No such channel\r\n";
                 client->receiveMessage(response);
                 return;
@@ -113,6 +115,7 @@ void Server::handleModeCommand(Message &message) {
             Channel *channel = _channels[target];
 
             if (message.getParams().size() == 1) { // Retrieving current channel modes
+                // 324 RPL_CHANNELMODEIS
                 response = ":" + SERVER_NAME + " 324 " + nickname + " " + target + " " + channel->getModes() + "\r\n";
             } else { // Setting channel modes
                 std::string modeString = message.getParams()[1];
@@ -121,6 +124,7 @@ void Server::handleModeCommand(Message &message) {
                 for (size_t i = 0; i < modeString.length(); i++) {
                     char mode = modeString[i];
                     if (mode != '+' && mode != '-' && !isValidMode(mode, true)) {
+                        // 501 ERR_UMODEUNKNOWNFLAG
                         response = ":" + SERVER_NAME + " 501 " + nickname + " :Unknown MODE flag\r\n";
                         client->receiveMessage(response);
                         return;
@@ -129,6 +133,7 @@ void Server::handleModeCommand(Message &message) {
 
                 if (channel->isOperator(client)) {
                     if (!channel->setModesFromString(modeString, message.getParams())) {
+                        // 441 ERR_USERNOTINCHANNEL
                         response = ":" + SERVER_NAME + " 441 " + nickname + " " + target + " :They aren't on that channel\r\n";
                     }
                     else {
@@ -136,6 +141,7 @@ void Server::handleModeCommand(Message &message) {
                                    " MODE " + target + " " + modeString + "\r\n";
                     }
                 } else {
+                    /// 482 ERR_CHANOPRIVSNEEDED
                     response = ":" + SERVER_NAME + " 482 " + nickname + " " + target + " :You're not a channel operator\r\n";
                 }
             }
@@ -143,6 +149,7 @@ void Server::handleModeCommand(Message &message) {
         
         else if (target == client->getNickname()) { // Handling User Modes
             if (message.getParams().size() == 1) { // Retrieving current user modes
+                // 221 RPL_UMODEIS
                 response = ":" + SERVER_NAME + " 221 " + nickname + " " + client->getModes() + "\r\n";
             } else { // Setting user modes
                 std::string modeString = message.getParams()[1];
@@ -151,6 +158,7 @@ void Server::handleModeCommand(Message &message) {
                 for (size_t i = 0; i < modeString.length(); i++) {
                     char mode = modeString[i];
                     if (mode != '+' && mode != '-' && !isValidMode(mode, false)) {
+                        // 501 ERR_UMODEUNKNOWNFLAG
                         response = ":" + SERVER_NAME + " 501 " + nickname + " :Unknown MODE flag\r\n";
                         client->receiveMessage(response);
                         return;
@@ -165,7 +173,8 @@ void Server::handleModeCommand(Message &message) {
         } 
         
         else {
-            response = ":" + SERVER_NAME + " 401 " + nickname + " " + target + " :No such nick/channel\r\n";
+            // 401 ERR_NOSUCHNICK
+            response = ":" + SERVER_NAME + " 401 " + nickname + " " + target + " :No such nick\r\n";
         }
     }
 
@@ -189,14 +198,17 @@ bool Server::handlePassCommand(Message &message) {
 	std::string nickname = client->getNickname().empty() ? "*" : client->getNickname();
 
 	if (client->isAuthenticated()) {
+        // 462 ERR_ALREADYREGISTRED
 		std::string response = ":" + SERVER_NAME + " 462 " + nickname + " :You may not reregister\r\n";
 		client->receiveMessage(response);
 	}
 	else if (message.getParams().empty()) {
+        // 461 ERR_NEEDMOREPARAMS
 		std::string response = ":" + SERVER_NAME + " 461 " + nickname + " PASS :Not enough parameters\r\n";
 		client->receiveMessage(response);
 	}
 	else if (message.getParams()[0] != getPassword()) {
+        // 464 ERR_PASSWDMISMATCH
 		std::string response = ":" + SERVER_NAME + " 464 " + nickname + " :Password incorrect\r\n";
 		client->receiveMessage(response);
 		std::stringstream ss;
@@ -223,7 +235,7 @@ void Server::handleUserCommand(Message &message) {
     }
     
     if (!_password.empty() && !client->isAuthenticated()) {
-        // They haven't done PASS yet.
+        // 451 ERR_NOTREGISTERED
         client->receiveMessage(":" + SERVER_NAME + " 451 " + client->getNickname() + " :You have not registered\r\n");
         return;
     }
@@ -302,12 +314,13 @@ void Server::handleJoinCommand(Message &message) {
             client->receiveMessage(joinMsg);
             newChannel->broadcastMessage(joinMsg, client);
 
-            // RPL_NOTOPIC (331) if no topic is set, otherwise RPL_TOPIC (332).
+            // 331 RPL_NOTOPIC
             if (newChannel->getTopic().empty()) {
                 std::string noTopic = ":" + SERVER_NAME + " 331 " + client->getNickname()
                     + " " + channelName + " :No topic is set\r\n";
                 client->receiveMessage(noTopic);
             } else {
+            // 332 RPL_TOPIC
                 std::string topicReply = ":" + SERVER_NAME + " 332 " + client->getNickname()
                     + " " + channelName + " :" + newChannel->getTopic() + "\r\n";
                 client->receiveMessage(topicReply);
@@ -322,7 +335,7 @@ void Server::handleJoinCommand(Message &message) {
             // Channel already exists
             Channel *channel = _channels[channelName];
 
-            // If already in the channel, 443 ERR_USERONCHANNEL
+            // 443 ERR_USERONCHANNEL
             if (channel->hasClient(client)) {
                 std::string errMsg = ":" + SERVER_NAME + " 443 " + client->getNickname() 
                                      + " " + channelName + " :is already on channel\r\n";
@@ -330,7 +343,7 @@ void Server::handleJoinCommand(Message &message) {
                 continue;
             }
 
-            // If invite-only (+i) and user is not invited, 473 ERR_INVITEONLYCHAN
+            // 473 ERR_INVITEONLYCHAN
             if (channel->hasMode(IRC::MODE_I) && !channel->isInvitedClient(client)) {
                 std::string errMsg = ":" + SERVER_NAME + " 473 " + client->getNickname()
                                      + " " + channelName + " :Cannot join channel (+i)\r\n";
@@ -341,6 +354,7 @@ void Server::handleJoinCommand(Message &message) {
             // If +k is set, verify the correct key
             if (channel->hasMode(IRC::MODE_K)) {
                 if (providedKey.empty() || providedKey != channel->getPassword()) {
+                    // 475 ERR_BADCHANNELKEY
                     std::string errMsg = ":" + SERVER_NAME + " 475 " + client->getNickname()
                                          + " " + channelName + " :Cannot join channel (+k)\r\n";
                     client->receiveMessage(errMsg);
@@ -348,7 +362,7 @@ void Server::handleJoinCommand(Message &message) {
                 }
             }
 
-            // If +l is set (limit) and channel->addClient(client) fails, 471 ERR_CHANNELISFULL
+            // 471 ERR_CHANNELISFULL
             if (!channel->addClient(client)) {
                 std::string errMsg = ":" + SERVER_NAME + " 471 " + client->getNickname()
                                      + " " + channelName + " :Cannot join channel (+l)\r\n";
@@ -385,12 +399,14 @@ void Server::handlePrivmsgCommand(Message &message) {
 	Client *sender = _clients[message.getSenderId()];
 
 	if (message.getParams().empty()) {
+        // 411 ERR_NORECIPIENT
 		std::string response = ":" + SERVER_NAME + " 411 " + sender->getNickname() + " :No recipient given (PRIVMSG)\r\n";
 		sender->receiveMessage(response);
 		return;
 	}
 
 	if (message.getParams().size() < 2 || message.getParams()[1].empty()) {
+        // 412 ERR_NOTEXTTOSEND
 		std::string response = ":" + SERVER_NAME + " 412 " + sender->getNickname() + " :No text to send\r\n";
 		sender->receiveMessage(response);
 		return;
@@ -401,12 +417,14 @@ void Server::handlePrivmsgCommand(Message &message) {
 
 	if (target[0] == '#') { // Target is a channel
 		if (_channels.find(target) == _channels.end()) {
+            // 403 ERR_NOSUCHCHANNEL
 			std::string response = ":" + SERVER_NAME + " 403 " + sender->getNickname() + " " + target + " :No such channel\r\n";
 			sender->receiveMessage(response);
 			return;
 		}
 		Channel *channel = _channels[target];
 		if (!channel->hasClient(sender)) {
+            // 404 ERR_CANNOTSENDTOCHAN
 			std::string response = ":" + SERVER_NAME + " 404 " + sender->getNickname() + " " + target + " :Cannot send to channel\r\n";
 			sender->receiveMessage(response);
 			return;
@@ -422,6 +440,7 @@ void Server::handlePrivmsgCommand(Message &message) {
 			}
 			++it;
 		}
+        // 401 ERR_NOSUCHNICK
 		std::string response = ":" + SERVER_NAME + " 401 " + sender->getNickname() + " " + target + " :No such nick\r\n";
 		sender->receiveMessage(response);
 
@@ -432,6 +451,7 @@ void Server::handleInviteCommand(Message &message) {
 	Client *inviter = _clients[message.getSenderId()];
 	
 	if (message.getParams().size() < 2) {
+        // 461 ERR_NEEDMOREPARAMS
 		std::string response = ":" + SERVER_NAME + " 461 " + inviter->getNickname() + " INVITE :Not enough parameters\r\n";
 		inviter->receiveMessage(response);
 		return;
@@ -441,6 +461,7 @@ void Server::handleInviteCommand(Message &message) {
 	std::string channelName = message.getParams()[1];
 
 	if (_channels.find(channelName) == _channels.end()) {
+        // 403 ERR_NOSUCHCHANNEL
 		std::string response = ":" + SERVER_NAME + " 403 " + inviter->getNickname() + " " + channelName + " :No such channel\r\n";
         inviter->receiveMessage(response);
 		return;
@@ -448,6 +469,7 @@ void Server::handleInviteCommand(Message &message) {
 
 	Channel *channel = _channels[channelName];
 	if (!channel->hasClient(inviter)) {
+        // 442 ERR_NOTONCHANNEL
 		std::string response = ":" + SERVER_NAME + " 442 " + inviter->getNickname() + " " + channelName + " :You're not on that channel\r\n";
         inviter->receiveMessage(response);
 		return;
@@ -464,6 +486,7 @@ void Server::handleInviteCommand(Message &message) {
 	}
 	
 	if (!invitee) {
+        // 401 ERR_NOSUCHNICK
 		std::string response = ":" + SERVER_NAME + " 401 " + inviter->getNickname() + " " + nickname + " :No such nick\r\n";
 		inviter->receiveMessage(response);
 		return;
@@ -478,6 +501,7 @@ void Server::handleInviteCommand(Message &message) {
 	std::string inviteResponse = ":" + inviter->getNickname() + " INVITE " + nickname + " :" + channelName + "\r\n";
 	invitee->receiveMessage(inviteResponse);
 
+    // 341 RPL_INVITING
 	std::string inviterResponse = ":" + SERVER_NAME + " 341 " + inviter->getNickname() + " " + nickname + " " + channelName + "\r\n";
 	inviter->receiveMessage(inviterResponse);
 	
@@ -488,6 +512,7 @@ void Server::handleTopicCommand(Message &message) {
 	Client *client = _clients[message.getSenderId()];
 
 	if (message.getParams().empty()) {
+        // 461 ERR_NEEDMOREPARAMS
 		std::string response = ":" + SERVER_NAME + " 461 TOPIC :Not enough parameters\r\n";
 		client->receiveMessage(response);
 		return;
@@ -496,6 +521,7 @@ void Server::handleTopicCommand(Message &message) {
 	std::string channelName = message.getParams()[0];
 
 	if (_channels.find(channelName) == _channels.end()) {
+        // 403 ERR_NOSUCHCHANNEL
 		std::string response = ":" + SERVER_NAME + " 403 " + channelName + " :No such channel\r\n";
 		client->receiveMessage(response);
 		return;
@@ -530,6 +556,7 @@ void Server::handleKickCommand(Message &message) {
 	Client *kicker = _clients[message.getSenderId()];
 
 	if (message.getParams().size() < 2) {
+        // 461 ERR_NEEDMOREPARAMS
 		std::string response = ":" + SERVER_NAME + " 461 KICK :Not enough parameters\r\n";
 		kicker->receiveMessage(response);
 		return;
@@ -540,6 +567,7 @@ void Server::handleKickCommand(Message &message) {
 	std::string reason = (message.getParams().size() > 2) ? message.getParams()[2] : "No reason";
 
 	if (_channels.find(channelName) == _channels.end()) {
+        // 403 ERR_NOSUCHCHANNEL
 		std::string response = ":" + SERVER_NAME + " 403 " + channelName + " :No such channel\r\n";
 		kicker->receiveMessage(response);
 		return;
@@ -547,6 +575,7 @@ void Server::handleKickCommand(Message &message) {
 
 	Channel *channel = _channels[channelName];
 	if (!channel->hasClient(kicker)) {
+        // 442 ERR_NOTONCHANNEL
 		std::string response = ":" + SERVER_NAME + " 442 " + kicker->getNickname() + " " + channelName + " :You're not on that channel\r\n";
 		kicker->receiveMessage(response);
 		return;
@@ -569,6 +598,7 @@ void Server::handleKickCommand(Message &message) {
 	}
 
 	if (!target) {
+        // 401 ERR_NOSUCHNICK
 		std::string response = ":" + SERVER_NAME + " 401 " + targetName + " :No such nick\r\n";
         kicker->receiveMessage(response);
         return;

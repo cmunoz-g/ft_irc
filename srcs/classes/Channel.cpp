@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 12:34:19 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/10 14:12:48 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,9 +266,11 @@ void Channel::sendNames(Client* client) const {
     }
 
     std::string serverReply;
+    // 353 RPL_NAMREPLY
     serverReply = ":" + SERVER_NAME + " 353 " + client->getNickname() + " = " + _name + " :" + namesList + "\r\n";
     client->receiveMessage(serverReply);
 
+    // 366 RPL_ENDOFNAMES
     std::string endReply = ":" + SERVER_NAME + " 366 " + 
                           client->getNickname() + " " + 
                           _name + " :End of /NAMES list" + "\r\n";
