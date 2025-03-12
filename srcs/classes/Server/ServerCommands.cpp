@@ -206,6 +206,7 @@ bool Server::handlePassCommand(Message &message) {
         // 461 ERR_NEEDMOREPARAMS
 		std::string response = ":" + SERVER_NAME + " 461 " + nickname + " PASS :Not enough parameters\r\n";
 		client->receiveMessage(response);
+        return false;
 	}
 	else if (message.getParams()[0] != getPassword()) {
         // 464 ERR_PASSWDMISMATCH

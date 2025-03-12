@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 15:14:48 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/12 10:55:24 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ class Message;
 
 const static int BUFFER_SIZE = 1024;
 static std::string SERVER_NAME = "irc.localhost";
-static volatile sig_atomic_t g_running = 1;
+extern volatile sig_atomic_t g_running;
 
 // Utils
 int		stringToInt(const std::string& str);

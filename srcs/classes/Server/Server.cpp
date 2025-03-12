@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 15:18:51 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/12 10:56:09 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,17 +40,10 @@ void Server::start() {
 
     while (g_running) {
         int ret = poll(_pollfds.data(), _pollfds.size(), -1);
-        std::cout << "[DEBUG] poll returned " << ret 
-                  << ", errno=" << errno
-                  << ", g_running=" << g_running
-                  << std::endl;
     
         if (ret < 0) {
             if (errno == EINTR) {
-                // print debug
-                std::cout << "[DEBUG] EINTR => g_running=" << g_running << std::endl;
                 if (!g_running) {
-                    std::cout << "[DEBUG] Breaking out of main loop" << std::endl;
                     break;
                 }
                 continue;
@@ -100,6 +93,4 @@ void Server::cleanup() {
     _channels.clear();
 
     _pollfds.clear();
-
-    std::cout << "[LOG] Server cleanup complete" << std::endl;
 }

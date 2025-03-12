@@ -6,11 +6,13 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 14:58:27 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/12 10:55:33 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
+
+volatile sig_atomic_t g_running = 1;
 
 int main(int argc, char* argv[]) {
     std::signal(SIGINT, signalHandler);
