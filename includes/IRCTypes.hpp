@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 13:23:33 by juramos           #+#    #+#             */
-/*   Updated: 2025/02/25 12:35:07 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:12:03 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ namespace IRC {
         CMD_PONG,    // Respuesta a PING
         CMD_QUIT,     // Desconexión del servidor
 
+        CMD_WHO,
         CMD_UNKNOWN // Just in case
     };
 

@@ -145,6 +145,7 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             case IRC::CMD_MODE:    handleModeCommand(newMessage);    break;
             case IRC::CMD_PING:    handlePingCommand(newMessage);    break;
             case IRC::CMD_KICK:    handleKickCommand(newMessage);    break;
+            case IRC::CMD_WHO:                                       break;
             case IRC::CMD_UNKNOWN: {
                 // 421 ERR_UNKNOWNCOMMAND
                 std::string response = ":" + SERVER_NAME + " 421 " + client->getNickname() + " " + newMessage.getCommand() + " :Unknown command\r\n";

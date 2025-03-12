@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 12:07:15 by cmunoz-g          #+#    #+#             */
-/*   Updated: 2025/03/05 12:36:22 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/12 11:50:07 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,6 +116,7 @@ void Message::initCommandMap() {
         _commandMap.insert(std::make_pair("QUIT", IRC::CMD_QUIT));
         _commandMap.insert(std::make_pair("PING", IRC::CMD_PING));
         _commandMap.insert(std::make_pair("PONG", IRC::CMD_PONG));
+        _commandMap.insert(std::make_pair("WHO", IRC::CMD_WHO));
     }
 }
 
@@ -131,13 +132,13 @@ void    Message::setCommandType(void) {
 
 void    Message::printMessageDebug(int client_id) const {
     std::cout << GREEN << "[CMD] " << RESET "[ID:" << client_id << "] Handling " << getCommand() << " command" << std::endl;
-    // std::cout << "type :" << _commandType << std::endl;
-	// std::cout << "command :" << this->getCommand() << std::endl; 
-	// std::cout << "prefix :" << this->getPrefix() << std::endl; 
-    // const std::vector<std::string> params = this->getParams();
-	// int i = 1;
-	// for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it) {
-    //     std::cout << "param" << i << ":" << *it << std::endl; 
-    //     i++;
-	// }
+    std::cout << "type :" << _commandType << std::endl;
+	std::cout << "command :" << this->getCommand() << std::endl; 
+	std::cout << "prefix :" << this->getPrefix() << std::endl; 
+    const std::vector<std::string> params = this->getParams();
+	int i = 1;
+	for (std::vector<std::string>::const_iterator it = params.begin(); it != params.end(); ++it) {
+        std::cout << "param" << i << ":" << *it << std::endl; 
+        i++;
+	}
 }
