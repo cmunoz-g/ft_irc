@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 13:23:33 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/12 11:12:03 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:54:23 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 #define IRC_TYPES_HPP
 
 namespace IRC {
-
-    // Comandos básicos requeridos según el subject
     enum CommandType {
 		// Validación conexión entre cliente y servidor
 		CMD_CAP,
@@ -38,9 +36,8 @@ namespace IRC {
         CMD_PING,    // Mantener conexión viva
         CMD_PONG,    // Respuesta a PING
         CMD_QUIT,     // Desconexión del servidor
-
-        CMD_WHO,
-        CMD_UNKNOWN // Just in case
+        
+        CMD_UNKNOWN 
     };
 
     // Modos de canal requeridos según el subject
@@ -58,22 +55,6 @@ namespace IRC {
         C_MODE_O,    // o - Privilegios de operador
         C_MODE_I    // i - Invisible
     };
-
-    // // Estados posibles de un usuario
-    // enum UserState {
-    //     USER_CONNECTED,     // Conectado pero no autenticado
-    //     USER_AUTHENTICATED, // Password correcto
-    //     USER_REGISTERED,    // Nick y usuario establecidos
-    //     USER_OPERATOR      // Es operador
-    // };
-
-    // // Estados posibles de un canal
-    // enum ChannelState {
-    //     CHANNEL_ACTIVE,    // Canal activo
-    //     CHANNEL_INVITE,    // Canal solo por invitación
-    //     CHANNEL_PRIVATE,   // Canal privado (con password)
-    //     CHANNEL_LIMITED    // Canal con límite de usuarios
-    // };
 }
 
 #endif

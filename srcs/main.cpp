@@ -6,11 +6,19 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/12 10:55:33 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:58:03 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
+
+// formatear Server.hpp y los cpp
+// quitar includes que no use, quitar fts que no use, quitar macros/cosas del namespace que no use
+// revisar nombres de variables(camelCase), revisar que no hay comentarios de debug, revisar spelling, revisar std::string response 
+// ver que metodos puedo meter en private por clase
+// Revisar nc ctrld vacio
+// ultimo check con el subject
+// quitar codigo comentado
 
 volatile sig_atomic_t g_running = 1;
 

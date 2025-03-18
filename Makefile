@@ -6,12 +6,12 @@
 #    By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/11/25 10:27:14 by juramos           #+#    #+#              #
-#    Updated: 2025/03/10 14:56:06 by cmunoz-g         ###   ########.fr        #
+#    Updated: 2025/03/13 13:11:15 by cmunoz-g         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = ircserv
-CXX = clang++
+CXX = c++
 CXXFLAGS = -Wall -Werror -Wextra -std=c++98
 FOLDER = srcs/
 OBJFOLDER = obj/

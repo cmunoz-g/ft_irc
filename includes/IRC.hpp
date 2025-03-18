@@ -6,13 +6,14 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/12 10:55:24 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:55:33 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef IRC_HPP
 #define IRC_HPP
 
+// *** Includes ***
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -33,6 +34,7 @@
 #include "Server.hpp"
 #include "Message.hpp"
 
+// *** Format ***
 #define RESET   "\033[0m" 
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
@@ -40,16 +42,18 @@
 #define YELLOW  "\033[33m"
 #define MAGENTA "\033[35m"
 
+// *** Classes ***
 class Channel;
 class Client;
 class Server;
 class Message;
 
-const static int BUFFER_SIZE = 1024;
-static std::string SERVER_NAME = "irc.localhost";
-extern volatile sig_atomic_t g_running;
+// *** Macros & Global ***
+const static int				BUFFER_SIZE = 1024;
+static std::string				SERVER_NAME = "irc.localhost";
+extern volatile sig_atomic_t	g_running;
 
-// Utils
+// *** Utils ***
 int		stringToInt(const std::string& str);
 bool	isValidMode(char mode, bool isChannelMode);
 void 	error(const std::string& errorMsg, bool throws, bool usesErrno);

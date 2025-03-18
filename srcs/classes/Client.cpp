@@ -6,49 +6,38 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 12:38:49 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:42:30 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
+// *** Constructors & Destructor ***
 Client::Client(int socket, unsigned int id): _socket(socket), _nickname(""),
 	_username(""), _buffer(""), _authenticated(false), _registered(false), _passwordAttempts(0), _id(id) {}
 
-Client::Client(): _socket(-1), _nickname(""),
-	_username(""), _buffer(""), _authenticated(false), _registered(false), _passwordAttempts(0), _id(0) {} // 0 is set as default id
-
 Client::~Client() {}
 
-int	Client::getSocket() const { return _socket; }
+// *** Getters, Setters ***
+int Client::getSocket() const {
+    return _socket;
+}
 
-Client::Client(const Client &toCopy)
-    : _socket(toCopy._socket),
-      _nickname(toCopy._nickname),
-      _username(toCopy._username),
-      _buffer(toCopy._buffer),
-      _authenticated(toCopy._authenticated),
-      _id(toCopy._id), // Initialize const member
-      _channels(toCopy._channels), // Copy map of channels
-      _op_channels(toCopy._op_channels) // Copy map of op channels
-{}
+std::string const   Client::getNickname() const {
+    return _nickname;
+}
 
-std::string const	Client::getNickname() const { return _nickname; }
+std::string const   Client::getUsername() const {
+    return _username;
+}
 
-std::string const	Client::getUsername() const { return _username; }
+unsigned int    Client::getId() const {
+    return _id;
+}
 
-unsigned int	Client::getId() const { return _id; }
-
-std::map<const std::string, Channel*> Client::getChannels() const {return _channels; }
-
-//
-bool	Client::isAuthenticated() const { return _authenticated; }
-
-bool	Client::isRegistered() const { return _registered; }
-
-bool    Client::isCapNegotiationDone() const { return _capNegotiation; }
-
-//
+std::map<const std::string, Channel*> Client::getChannels() const {
+    return _channels;
+}
 
 void        Client::setNickname(const std::string& nickname) {
 	_nickname = nickname;
@@ -73,10 +62,23 @@ void		Client::setCapNegotiationStatus(bool status) {
 void		Client::setBuffer(const std::string &buffer) {
 	_buffer = buffer;
 }
-//
 
-void	Client::appendToBuffer(const std::string& data)
-{
+// *** Member Functions ***
+// Checks
+bool	Client::isAuthenticated() const {
+    return _authenticated;
+}
+
+bool	Client::isRegistered() const {
+    return _registered;
+}
+
+bool    Client::isCapNegotiationDone() const {
+    return _capNegotiation;
+}
+
+// Buffer Operations
+void	Client::appendToBuffer(const std::string& data) {
 	_buffer.append(data);
 }
 
@@ -88,8 +90,7 @@ void	Client::clearBuffer(void) {
 	_buffer.clear();
 }
 
-//
-
+// Channel Operations
 void	Client::joinChannel(Channel *channel) {
 	if (isInChannel(channel)) {
 		error("Client is already on the channel", false, false);
@@ -126,7 +127,6 @@ void Client::leaveAllChannels() {
     }
 }
 
-
 bool	Client::isInChannel(const Channel *channel) const {
 	for (std::map<const std::string, Channel*>::const_iterator it = _channels.begin(); it != _channels.end(); ++it) {
 		if (it->second->getName() == channel->getName())
@@ -135,6 +135,7 @@ bool	Client::isInChannel(const Channel *channel) const {
 	return (false);
 }
 
+// Operator Operations
 void Client::setOperatorStatus(Channel *channel) {
     if (!isInChannel(channel)) {
         error("Client is not on the channel", false, false);
@@ -155,7 +156,6 @@ void Client::setOperatorStatus(Channel *channel) {
     channel->addOperator(this);
     _op_channels[channel->getName()] = channel;
 }
-
 
 void	Client::removeOperatorStatus(const Channel *channel) {
 	if (!isInChannel(channel)) {
@@ -182,8 +182,7 @@ bool	Client::isOperator(const Channel *channel) const {
 	return (false);
 }
 
-//
-
+// Communication
 void Client::receiveMessage(const std::string &message) {
     ssize_t bytesSent = ::send(_socket, message.c_str(), message.size(), 0);
 
@@ -204,8 +203,7 @@ void Client::receiveMessage(const std::string &message) {
     }
 }
 
-
-
+// Mode Operations
 void Client::setMode(IRC::ClientMode mode, bool enabled) {
     std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), mode);
     if (enabled && it == _modes.end()) {
@@ -281,6 +279,7 @@ std::string Client::getModes() const {
     return modes;
 }
 
+// Password Operations
 void Client::addPasswordAttempt() {
     _passwordAttempts++;
 }
@@ -289,8 +288,7 @@ unsigned int Client::getPasswordAttempts() const {
     return _passwordAttempts;
 }
 
-//
-
+// Cleanup
 void	Client::cleanup() {
 	for (std::map<const std::string, Channel*>::const_iterator it = _channels.begin(); it != _channels.end(); ++it) {
 		it->second->removeClient(this);
@@ -302,12 +300,13 @@ void	Client::cleanup() {
 	}
 	_op_channels.clear();
     
-	if (_socket != -1) { // Prevents reusing closed socket
+    // Prevents reusing closed socket
+	if (_socket != -1) { 
         close(_socket);
         _socket = -1;  
     }
 }
 
-bool	Client::operator==(Client &other) {
-	return (_id == other.getId());
-}
+// bool	Client::operator==(Client &other) {
+// 	return (_id == other.getId());
+// }

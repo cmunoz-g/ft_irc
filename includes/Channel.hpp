@@ -6,12 +6,12 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 12:39:21 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:53:24 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_HPP
-# define CHANNEL_HPP
+#define CHANNEL_HPP
 
 class Client;
 
@@ -22,68 +22,63 @@ class Client;
 
 class Channel {
 private:
-    std::string _name;                                  // Nombre del canal
-    std::string _topic;                                 // Topic del canal
-    std::string _password;                              // Password (para modo k)
-    std::vector<unsigned int> _modes;                   // Modos activos (usando ChannelMode)
-    std::map<unsigned int, Client*> _clients;           // Clientes en el canal
-    std::map<unsigned int, Client*> _operators;         // Operadores (true) y usuarios normales (false)
-    std::map<unsigned int, Client*> _invitedClients;    // Clientes invitados
-    size_t _userLimit;                                  // Límite de usuarios (para modo l)
-    Channel(void);
-    // Métodos auxiliares
-    bool canModifyTopic(Client* client) const;
-    bool isInviteOnly() const;
-    void notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param = "");
-    
+    // *** Attributes ***
+    std::string                     _name;                                  
+    std::string                     _topic;                                 
+    std::string                     _password;          // Password (+k)
+    std::vector<unsigned int>       _modes;                   
+    std::map<unsigned int, Client*> _clients;           
+    std::map<unsigned int, Client*> _operators;         
+    std::map<unsigned int, Client*> _invitedClients;    
+    size_t                          _userLimit;         // User limit (+l)
+   
     public:
-    // Constructor y destructor
+    // *** Constructor & Destructor ***
     Channel(const std::string& name, Client* creator);
     ~Channel();
-    Channel(const Channel& other);
-    Channel& operator=(const Channel& other);
-
-    // Getters básicos
-    const std::string& getName() const;
-    const std::string& getTopic() const;
-    const std::string& getPassword() const;
+    
+    // *** Getters & Setters ***
+    const std::string&              getName() const;
+    const std::string&              getTopic() const;
+    const std::string&              getPassword() const;
+    size_t                          getUserCount() const;
+    size_t                          getUserLimit() const;
+    std::string                     getModes() const;
     std::map<unsigned int, Client*> getClients() const;
-    size_t getUserCount() const;
-    size_t getUserLimit() const;
-    bool isOperator(Client* client) const;
-
-    // Manejo de modos (requeridos por el subject)
-    void setMode(IRC::ChannelMode mode, bool enabled = true);
-    bool setModesFromString(const std::string& modeString, const std::vector<std::string>& params);
-    std::string getModes() const;
-    bool hasMode(IRC::ChannelMode mode) const;
-    void setPassword(const std::string& pass);
-    void setUserLimit(size_t limit);
-    bool checkPassword(const std::string& pass) const;
-
-    // Manejo de topic (requerido por el subject)
-    bool setTopic(Client* client, const std::string& newTopic);
+    bool                            setTopic(Client* client, const std::string& newTopic);
+    void                            setPassword(const std::string& pass);
+    void                            setUserLimit(size_t limit);
+    // Mode Setters
+    void                            setMode(IRC::ChannelMode mode, bool enabled = true);
+    bool                            setModesFromString(const std::string& modeString, const std::vector<std::string>& params);
     
-    // Manejo de usuarios
-    bool addClient(Client* client);
-    void removeClient(Client* client);
-    bool hasClient(Client* client) const;
+    // *** Member Functions ***
+    // Checks
+    bool    isOperator(Client* client) const;
+    bool    hasMode(IRC::ChannelMode mode) const;
+    bool    checkPassword(const std::string& pass) const;
+    bool    canModifyTopic(Client* client) const;
+    bool    isInviteOnly() const;
     
-    // Manejo de invitados
-    void addInvitedClient(Client* client);
-    bool isInvitedClient(Client* client) const;
-    void removeInvitedClient(Client *client);
-
-    // Manejo de operadores
-    void addOperator(Client* client);
-    void removeOperator(Client* client);
+    // Client Operations
+    bool    addClient(Client* client);
+    void    removeClient(Client* client);
+    bool    hasClient(Client* client) const;
     
-    // Comandos de operador (requeridos por el subject)
-    void inviteClient(Client* operator_client, Client* target);
-
-    // Mensajes
-    void broadcastMessage(const std::string& message, Client* exclude = NULL);
-    void sendNames(Client* client) const;
+    // Invited Client Operations
+    void    inviteClient(Client* operator_client, Client* target);
+    void    addInvitedClient(Client* client);
+    bool    isInvitedClient(Client* client) const;
+    void    removeInvitedClient(Client *client);
+    
+    // Operator Operations
+    void    addOperator(Client* client);
+    void    removeOperator(Client* client);
+    
+    // Communication
+    void    broadcastMessage(const std::string& message, Client* exclude = NULL);
+    void    sendNames(Client* client) const;
+    void    notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param = "");
 
 };
 

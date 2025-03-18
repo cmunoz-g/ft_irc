@@ -6,20 +6,21 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 10:53:06 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/10 14:12:48 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/13 13:51:16 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
+// *** Constructor & Destructor ***
 Channel::Channel(const std::string& name, Client* creator) : _name(name), _topic(""), _password(""), _userLimit(0) {
     _clients.insert(std::make_pair(creator->getId(), creator));
     _operators.insert(std::make_pair(creator->getId(), creator));
 }
 
-Channel::~Channel() {
-}
+Channel::~Channel() {}
 
+// *** Getters & Setters
 const std::string& Channel::getName() const {
     return _name;
 }
@@ -59,11 +60,23 @@ std::map<unsigned int, Client*> Channel::getClients() const {
     return _clients;
 }
 
-bool Channel::isOperator(Client* client) const {
-    std::map<unsigned int, Client*>::const_iterator it = _operators.find(client->getId());
-    return it != _operators.end();
+bool Channel::setTopic(Client* client, const std::string& newTopic) {
+    if (!isOperator(client) && hasMode(IRC::MODE_T)) {
+        return false;
+    }
+    _topic = newTopic;
+    return true;
 }
 
+void Channel::setPassword(const std::string& pass) {
+    _password = pass;
+}
+
+void Channel::setUserLimit(size_t limit) {
+    _userLimit = limit;
+}
+
+// Mode Setters
 void Channel::setMode(IRC::ChannelMode mode, bool enabled) {
     std::vector<unsigned int>::iterator it = std::find(_modes.begin(), _modes.end(), mode);
     if (enabled && it == _modes.end()) {
@@ -170,31 +183,30 @@ bool Channel::setModesFromString(const std::string& modeString, const std::vecto
     return true;
 }
 
+// *** Member Functions ***
+// Checks
+bool Channel::isOperator(Client* client) const {
+    std::map<unsigned int, Client*>::const_iterator it = _operators.find(client->getId());
+    return it != _operators.end();
+}
 
 bool Channel::hasMode(IRC::ChannelMode mode) const {
     return std::find(_modes.begin(), _modes.end(), mode) != _modes.end();
-}
-
-void Channel::setPassword(const std::string& pass) {
-    _password = pass;
-}
-
-void Channel::setUserLimit(size_t limit) {
-    _userLimit = limit;
 }
 
 bool Channel::checkPassword(const std::string& pass) const {
     return _password == pass;
 }
 
-bool Channel::setTopic(Client* client, const std::string& newTopic) {
-    if (!isOperator(client) && hasMode(IRC::MODE_T)) {
-        return false;
-    }
-    _topic = newTopic;
-    return true;
+bool Channel::canModifyTopic(Client* client) const {
+    return isOperator(client) || !hasMode(IRC::MODE_T);
 }
 
+bool Channel::isInviteOnly() const {
+    return hasMode(IRC::MODE_I);
+}
+
+// Client Operations
 bool Channel::addClient(Client* client) {
     if (getUserLimit() > 0 && (getUserCount() >= getUserLimit()))
         return false;
@@ -215,6 +227,12 @@ bool Channel::hasClient(Client* client) const {
     return _clients.find(client->getId()) != _clients.end();
 }
 
+// Invited Client Operations
+void Channel::inviteClient(Client* operator_client, Client* target) {
+    if (isOperator(operator_client))
+        addInvitedClient(target);
+}
+
 void Channel::addInvitedClient(Client* client) {
     _invitedClients.insert(std::make_pair(client->getId(), client));
 }
@@ -230,6 +248,7 @@ void Channel::removeInvitedClient(Client *client) {
     }
 }
 
+// Operator Operations
 void Channel::addOperator(Client* client) {
     _operators.insert(std::make_pair(client->getId(), client));
 }
@@ -241,11 +260,7 @@ void Channel::removeOperator(Client* client) {
     }
 }
 
-void Channel::inviteClient(Client* operator_client, Client* target) {
-    if (isOperator(operator_client))
-        addInvitedClient(target);
-}
-
+// Communication
 void Channel::broadcastMessage(const std::string& message, Client* exclude) {
     std::map<unsigned int, Client*>::iterator it;
     for (it = _clients.begin(); it != _clients.end(); ++it) {
@@ -277,14 +292,6 @@ void Channel::sendNames(Client* client) const {
     client->receiveMessage(endReply);
 }
 
-bool Channel::canModifyTopic(Client* client) const {
-    return isOperator(client) || !hasMode(IRC::MODE_T);
-}
-
-bool Channel::isInviteOnly() const {
-    return hasMode(IRC::MODE_I);
-}
-
 void Channel::notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param) {
     std::ostringstream message;
     
@@ -298,4 +305,3 @@ void Channel::notifyModeChange(Client* changer, char mode, bool enabled, const s
 
     broadcastMessage(message.str());
 }
-
