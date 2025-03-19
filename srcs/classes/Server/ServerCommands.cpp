@@ -253,14 +253,18 @@ void Server::handleUserCommand(Message &message) {
 
 
 void Server::handleJoinCommand(Message &message) {
+    Client *client = _clients[message.getSenderId()];
+
     // If there's no channel parameter, Irssi often sends an empty JOIN in auto-join scenarios.
     // Just return in that case.
     if (message.getParams().empty() || message.getParams()[0].empty()) {
+		// 461 ERR_NEEDMOREPARAMS
+        std::string response = ":" + SERVER_NAME + " 461 " + client->getNickname() + " JOIN :Not enough parameters\r\n";
+        client->receiveMessage(response);
         return;
     }
 
     // JOIN 0 is the standard way to leave all channels at once
-    Client *client = _clients[message.getSenderId()];
     if (message.getParams().size() == 1 && message.getParams()[0] == "0") {
         client->leaveAllChannels();
         return;

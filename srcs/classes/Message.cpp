@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 12:07:15 by cmunoz-g          #+#    #+#             */
-/*   Updated: 2025/03/13 13:42:42 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 11:21:48 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void	Message::setReceiver(void)
 {
 	for (std::vector<std::string>::iterator it = _command._params.begin(); it < _command._params.end(); it++)
 	{
-		if (!(*it).empty() && (*it).at(0) == '#')
+		if (!it->empty() && (it->at(0) == '#' || it->at(0) == '&'))
 			_receiverChannel = (*it);
 	}
 }
@@ -74,51 +74,68 @@ void    Message::setCommandType(void) {
 }
 
 // *** Member Functions ***
-void    Message::parse(const std::string& buffer) {
+void Message::parse(const std::string& buffer) {
     std::string msg = buffer;
     
+    // Remove trailing "\r\n"
     size_t end = msg.find("\r\n");
     if (end != std::string::npos)
         msg = msg.substr(0, end);
 
+    // Extract prefix if present
     if (!msg.empty() && msg[0] == ':') {
         size_t space = msg.find(' ');
         if (space == std::string::npos) {
-            _command._prefix = "";
+            _command._prefix.clear();
             return;
         }
         _command._prefix = msg.substr(1, space - 1);
         msg = msg.substr(space + 1);
     }
 
+    // Extract command
     size_t space = msg.find(' ');
     if (space == std::string::npos) {
+        // Convert the entire string to uppercase if it's the command
         _command._command = msg;
+        std::transform(_command._command.begin(),
+                       _command._command.end(),
+                       _command._command.begin(),
+                       static_cast<int (*)(int)>(std::toupper));
         return; 
     }
     
     _command._command = msg.substr(0, space);
-    msg = msg.substr(space + 1);
 
+    // Convert only the command portion to uppercase
+    std::transform(_command._command.begin(),
+                   _command._command.end(),
+                   _command._command.begin(),
+                   static_cast<int (*)(int)>(std::toupper));
+
+    // Continue parsing the parameters
+    msg = msg.substr(space + 1);
     _command._params.clear();
     size_t start = 0;
     
     while (start < msg.length()) {
         if (msg[start] == ':') {
+            // If we encounter a leading ':', the rest is a single parameter
             _command._params.push_back(msg.substr(start + 1));
             break;
         }
 
         space = msg.find(' ', start);
-
         if (space == std::string::npos) {
+            // Last parameter
             _command._params.push_back(msg.substr(start));
             break;
         }
-
+        // Parameter between spaces
         _command._params.push_back(msg.substr(start, space - start));
         start = space + 1;
 
+        // Skip any extra spaces
         while (start < msg.length() && msg[start] == ' ')
             start++;
     }

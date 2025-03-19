@@ -6,30 +6,32 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 11:04:39 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/12 10:56:09 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 11:43:26 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
 
-Server::Server(void): _port(6667), _password("password") {
-		setUpServerSocket();
+// *** Constructor & Destructor
+
+Server::Server(int port, const std::string& password): _password(password) {
+	if (port < 1 || port > 65535)
+		error("Invalid port number", true, false);
+	this->_port = port;
+	setUpServerSocket();
 }
 
-Server::Server(int port, const std::string& password):
-	_port(port), _password(password) {
-		setUpServerSocket();
+Server::~Server() {
+	//close(_server_fd);
 }
+
+// *** Getters ***
 
 int	Server::getPort() const { return _port; }
 
 const std::string	&Server::getPassword() const { return _password; }
 
-Server::~Server() {
-	close(_server_fd);
-}
-
-/**/
+// *** Member Functions ***
 
 void Server::start() {
     Message::initCommandMap();

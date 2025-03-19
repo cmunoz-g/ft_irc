@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/13 13:55:33 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 10:11:18 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,7 @@
 #include <csignal>
 #include <fcntl.h>
 #include <iostream>
-#include <unistd.h>
 #include <errno.h>
-#include <cstdlib>
 #include <cstring>
 #include <sstream>
 #include "Channel.hpp"

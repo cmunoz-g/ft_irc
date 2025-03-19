@@ -64,6 +64,7 @@ void Server::handleNewConnection() {
 bool Server::handleClientMessage(struct pollfd& pfd) {
     char buffer[BUFFER_SIZE];
     ssize_t bytes_read = recv(pfd.fd, buffer, BUFFER_SIZE - 1, 0);
+	bool printed = false;
 
     if (bytes_read <= 0) {
         if (bytes_read == 0 || errno != EWOULDBLOCK) {
@@ -97,17 +98,24 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
         buf.erase(0, pos + 2);
     }
 
-    // Process PASS command first, Irssi sends PASS after NICK and USER
-    for (size_t i = 0; i < commands.size(); i++) {
-        if (commands[i].substr(0, 4) == "PASS") { 
-            client->setBuffer(commands[i]); 
-            Message newMessage(client);
-            newMessage.printMessageDebug(client_id);
-            if (!handlePassCommand(newMessage))
-                client->addPasswordAttempt();
-            break; 
-        }
-    }
+	for (size_t i = 0; i < commands.size(); i++) {
+		if (commands[i].size() >= 4) {
+			// Extract the first 4 characters and convert them to uppercase
+			std::string tmp = commands[i].substr(0, 4);
+			for (size_t j = 0; j < tmp.size(); ++j)
+				tmp[j] = static_cast<char>(std::toupper(tmp[j]));
+
+			if (tmp == "PASS") {
+				client->setBuffer(commands[i]);
+				Message newMessage(client);
+				newMessage.printMessageDebug(client_id);
+				printed = true;
+				if (!handlePassCommand(newMessage))
+					client->addPasswordAttempt();
+				break;
+			}
+		}
+	}	
 
     if (client->getPasswordAttempts() > 2)
         return false; // Disconnect client after 3 failed password attempts
@@ -131,7 +139,8 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
             }
         }
 
-        newMessage.printMessageDebug(client_id);
+        if (!printed)
+			newMessage.printMessageDebug(client_id);
         
         // Process allowed commands
         switch (cmd) {
@@ -161,22 +170,6 @@ bool Server::handleClientMessage(struct pollfd& pfd) {
     // Save any leftover partial data back to the client's buffer
     client->setBuffer(buf);
     return true; // Client remains connected
-}
-
-void Server::deleteClients() {
-	std::map<unsigned int, Client*>::iterator it = _clients.begin();
-
-	while (it != _clients.end()) {
-		if (it->second->getSocket() == -1) {
-			it->second->cleanup();
-			std::map<unsigned int, Client*>::iterator toErase = it;
-			++it;
-			_clients.erase(toErase);
-		}
-		else {
-			++it;
-		}
-	} 
 }
 
 void Server::removeClient(unsigned int client_id) {

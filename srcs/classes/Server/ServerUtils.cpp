@@ -4,7 +4,6 @@ void Server::broadcastNickChange(Client* client, const std::string &oldNick, con
     if (oldNick.empty() || oldNick == newNick)
         return;
 
-    // Build the NICK message
     std::string nickMsg = ":" + oldNick + "!" + client->getUsername() + "@" + SERVER_NAME + " NICK :" + newNick + "\r\n";
 
     std::map<const std::string, Channel*> channels = client->getChannels(); 
@@ -31,7 +30,7 @@ bool Server::checkUniqueNick(std::string nick) {
 
 	while (it != _clients.end()) {
 		if (it->second->getNickname() == nick)
-			return (false); // not unique
+			return (false); // Not unique
 		++it;
 	}
 	return (true);
@@ -42,7 +41,7 @@ void Server::tryRegister(Client* client) {
         return;
     }
 
-    if (!_password.empty() && !client->isAuthenticated()) { // Additional check
+    if (!_password.empty() && !client->isAuthenticated()) {
         return; 
     }
 

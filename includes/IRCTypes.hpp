@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/28 13:23:33 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/13 13:54:23 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 10:09:57 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,47 +14,47 @@
 #define IRC_TYPES_HPP
 
 namespace IRC {
-    enum CommandType {
-		// Validación conexión entre cliente y servidor
+	enum CommandType {
+		// *** Connection validation between client and server ***
 		CMD_CAP,
-        // Autenticación y configuración de usuario
-        CMD_PASS,    // Autenticación con password
-        CMD_NICK,    // Establecer/cambiar nickname
-        CMD_USER,    // Establecer username
-        
-        // Comandos de canal
-        CMD_JOIN,    // Unirse a un canal
-        CMD_PRIVMSG, // Enviar mensaje privado/canal
-        
-        // Comandos de operador
-        CMD_KICK,    // Expulsar usuario del canal
-        CMD_INVITE,  // Invitar usuario al canal
-        CMD_TOPIC,   // Cambiar/ver topic del canal
-        CMD_MODE,    // Cambiar modo del canal
-        
-        // Comandos adicionales necesarios
-        CMD_PING,    // Mantener conexión viva
-        CMD_PONG,    // Respuesta a PING
-        CMD_QUIT,     // Desconexión del servidor
-        
-        CMD_UNKNOWN 
-    };
+		
+		// *** User authentication and configuration *** 
+		CMD_PASS,    // Authenticate with password
+		CMD_NICK,    // Set/change nickname
+		CMD_USER,    // Set username
+		
+		// *** Channel commands *** 
+		CMD_JOIN,    // Join a channel
+		CMD_PRIVMSG, // Send private/channel message
+		
+		// *** Operator commands *** 
+		CMD_KICK,    // Kick user from the channel
+		CMD_INVITE,  // Invite user to the channel
+		CMD_TOPIC,   // Change/view channel topic
+		CMD_MODE,    // Change channel mode
+		
+		// *** Additional necessary commands *** 
+		CMD_PING,    // Keep connection alive
+		CMD_PONG,    // Response to PING
+		CMD_QUIT,    // Disconnect from the server
+		
+		CMD_UNKNOWN 
+	};
 
-    // Modos de canal requeridos según el subject
-    enum ChannelMode {
-        MODE_NONE,
-        MODE_I,    // i - Canal solo por invitación
-        MODE_T,    // t - Solo ops pueden cambiar topic
-        MODE_K,    // k - Canal tiene password
-        MODE_O,    // o - Privilegios de operador
-        MODE_L     // l - Límite de usuarios
-    };
+	enum ChannelMode {
+		MODE_NONE,
+		MODE_I,    // i - Invite-only channel
+		MODE_T,    // t - Only ops can change the topic
+		MODE_K,    // k - Channel has a password
+		MODE_O,    // o - Operator privileges
+		MODE_L     // l - User limit
+	};
 
-    enum ClientMode {
-        C_MODE_NONE,
-        C_MODE_O,    // o - Privilegios de operador
-        C_MODE_I    // i - Invisible
-    };
+	enum ClientMode {
+		C_MODE_NONE,
+		C_MODE_O,    // o - Operator privileges
+		C_MODE_I     // i - Invisible
+	};
 }
 
 #endif

@@ -6,9 +6,6 @@ void error(const std::string& errorMsg, bool throws, bool usesErrno) {
     if (usesErrno) { 
         formatMessage += "[" + std::string(strerror(errno)) + "]: ";
     }
-    else {
-        formatMessage += "[No errno]: ";
-    }
 
     if (throws)
         throw std::runtime_error(std::string(RED) + "[ERROR] " + formatMessage + std::string(RESET) + errorMsg);

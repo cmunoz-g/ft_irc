@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:07:13 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/13 13:42:30 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 11:29:23 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,10 +228,10 @@ void Client::setModesFromString(const std::string& modeString) {
 
             switch (c) {
                 case 'i':
-                    modeEnum = IRC::C_MODE_I; // Invisible mode
+                    modeEnum = IRC::C_MODE_I;
                     break;
                 case 'o':
-                    modeEnum = IRC::C_MODE_O; // Operator privileges
+                    modeEnum = IRC::C_MODE_O;
                     break;
                 default:
                     break;
@@ -262,10 +262,10 @@ std::string Client::getModes() const {
     for (size_t i = 0; i < _modes.size(); ++i) {
         switch (_modes[i]) {
             case IRC::C_MODE_I:
-                modes += "i"; // Invisible mode
+                modes += "i"; 
                 break;
             case IRC::C_MODE_O:
-                modes += "o"; // Operator mode
+                modes += "o";
                 break;
             default:
                 break;
@@ -306,7 +306,3 @@ void	Client::cleanup() {
         _socket = -1;  
     }
 }
-
-// bool	Client::operator==(Client &other) {
-// 	return (_id == other.getId());
-// }
