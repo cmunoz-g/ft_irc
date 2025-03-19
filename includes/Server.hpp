@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:28:50 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/19 10:07:01 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 12:15:47 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,27 +27,14 @@ private:
     std::map<unsigned int, Client*>			_clients;
 	std::map<const std::string, Channel*>	_channels;
     
-public:
-	// *** Server.cpp ***
-	// Constructor & Destructor
-    Server(int port, const std::string& password);
-    ~Server();
-    
-	// Getters
-	int					getPort() const;
-	const std::string	&getPassword() const;
-
-	// Member Functions
-    void 				start();
-    void 				cleanup();
-
-	// *** ServerConnection.cpp ***
+	// *** Methods ***
+	// ServerConnection.cpp
     void 				setUpServerSocket();
     void 				handleNewConnection();
     bool				handleClientMessage(struct pollfd& pfd);
     void 				removeClient(unsigned int client_id);
 
-    // *** ServerCommands.cpp ***
+    // ServerCommands.cpp
     void 				handleCapCommand(Message &message);
     void				handleNickCommand(Message &message);
     void				handleModeCommand(Message &message);
@@ -61,11 +48,25 @@ public:
     void				handleKickCommand(Message &message);
     void				handleQuitCommand(Message &message);
 	
-	// *** ServerUtils.cpp ***
+	// ServerUtils.cpp
     void 				broadcastNickChange(Client* client, const std::string &oldNick, const std::string &newNick);
     bool 				checkUniqueNick(std::string nick);
     void 				tryRegister(Client* client);
     unsigned int 		fetchClientIdFromPid(int fd);
+	
+public:
+	// Server.cpp
+	// - Constructor & Destructor
+    Server(int port, const std::string& password);
+    ~Server();
+    
+	// - Getters
+	int					getPort() const;
+	const std::string	&getPassword() const;
+
+	// - Start, Cleanup
+    void 				start();
+    void 				cleanup();
     
 };
 

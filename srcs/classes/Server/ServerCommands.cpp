@@ -332,6 +332,9 @@ void Server::handleJoinCommand(Message &message) {
 
         // If channel doesn't exist yet, create it
         if (_channels.find(channelName) == _channels.end()) {
+			if (channelName.size() > MAX_CHANNEL_LEN) {
+    			channelName = channelName.substr(0, MAX_CHANNEL_LEN);
+			}
             Channel *newChannel = new Channel(channelName, client);
             _channels[channelName] = newChannel;
 

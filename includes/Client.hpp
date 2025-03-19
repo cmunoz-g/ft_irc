@@ -21,12 +21,17 @@ private:
     std::map<const std::string, Channel*>   _channels;
     std::map<const std::string, Channel*>   _op_channels;
 
+	// *** Methods ***
+	// Cleanup
+    void	cleanup();
+	void	clearBuffer(void);
+
 public:
-    // *** Constructor & Destructor ///
+    // Constructor & Destructor
     Client(int socket, unsigned int id);
     ~Client();
 
-    // *** Getters, Setters ***
+    // Getters, Setters
     int					                    getSocket() const;
     std::string const                       getNickname() const;
     std::string const                       getUsername() const;
@@ -39,7 +44,6 @@ public:
     void                                    setCapNegotiationStatus(bool status);
     void                                    setBuffer(const std::string& buffer);
     
-    // *** Member Functions ***
     // Checks
     bool                isAuthenticated() const;
     bool                isRegistered() const;
@@ -48,7 +52,6 @@ public:
     // Buffer Operations
     void                appendToBuffer(const std::string& data);
 	std::string const   getBuffer() const;
-	void		        clearBuffer(void);
 
     // Channel Operations
     void                joinChannel(Channel *channel);
@@ -73,9 +76,6 @@ public:
     // Password Operations
     unsigned int        getPasswordAttempts() const;
     void                addPasswordAttempt(void);
-
-    // Cleanup
-    void                cleanup();
 
 };
 

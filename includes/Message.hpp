@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 12:01:43 by cmunoz-g          #+#    #+#             */
-/*   Updated: 2025/03/13 13:31:25 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 12:21:37 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,20 +32,17 @@ private:
 	unsigned int									_senderId;
 	std::string										_receiverChannel;
 	
-	// Message(const Message &toCopy);
-	// Message &operator=(const Message &other);
-	
-	// *** Member Functions ***
+	// *** Methods ***
 	void	parse(const std::string& buffer);
 	void	setReceiver(void);
 	void    setCommandType(void);
     
 public:
-	// *** Constructor, Destructor ***
+	// Constructor, Destructor
 	Message(const Client *client);
 	~Message(void);
     
-    // *** Getters ***
+    // Getters
     const std::string&				getPrefix() const;
     const std::string&				getCommand() const;
     const std::vector<std::string>& getParams() const;
@@ -54,10 +51,10 @@ public:
 	unsigned int					getSenderId() const;
 	std::string						getReceiverChannel() const;
 
-	// *** Member Functions ***
+	// Print
 	void							printMessageDebug(int client_id) const;
 	
-	// *** Static ***
+	// Static
 	static void						initCommandMap(void);
 };
 

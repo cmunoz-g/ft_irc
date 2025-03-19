@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:54 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/19 10:11:18 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 12:28:19 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ class Message;
 // *** Macros & Global ***
 const static int				BUFFER_SIZE = 1024;
 static std::string				SERVER_NAME = "irc.localhost";
+const static size_t				MAX_CHANNEL_LEN = 200;
 extern volatile sig_atomic_t	g_running;
 
 // *** Utils ***

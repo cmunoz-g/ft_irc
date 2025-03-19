@@ -6,14 +6,11 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/25 10:38:08 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/19 12:04:55 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 12:31:17 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IRC.hpp"
-
-// Funciones privadas/publicas
-// Revisar prefijos de usuario (@)
 
 volatile sig_atomic_t g_running = 1;
 

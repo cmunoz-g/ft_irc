@@ -6,7 +6,7 @@
 /*   By: cmunoz-g <cmunoz-g@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/26 10:44:00 by juramos           #+#    #+#             */
-/*   Updated: 2025/03/13 13:53:24 by cmunoz-g         ###   ########.fr       */
+/*   Updated: 2025/03/19 12:18:25 by cmunoz-g         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,13 +31,20 @@ private:
     std::map<unsigned int, Client*> _operators;         
     std::map<unsigned int, Client*> _invitedClients;    
     size_t                          _userLimit;         // User limit (+l)
-   
+	
+	// *** Methods ***
+	bool	checkPassword(const std::string& pass) const;
+	bool    canModifyTopic(Client* client) const;
+	void    inviteClient(Client* operator_client, Client* target);
+	void    removeInvitedClient(Client *client);
+	void    notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param = "");
+
     public:
-    // *** Constructor & Destructor ***
+    // Constructor & Destructor
     Channel(const std::string& name, Client* creator);
     ~Channel();
     
-    // *** Getters & Setters ***
+    // Getters & Setters
     const std::string&              getName() const;
     const std::string&              getTopic() const;
     const std::string&              getPassword() const;
@@ -48,16 +55,13 @@ private:
     bool                            setTopic(Client* client, const std::string& newTopic);
     void                            setPassword(const std::string& pass);
     void                            setUserLimit(size_t limit);
-    // Mode Setters
+    // - Mode Setters
     void                            setMode(IRC::ChannelMode mode, bool enabled = true);
     bool                            setModesFromString(const std::string& modeString, const std::vector<std::string>& params);
     
-    // *** Member Functions ***
     // Checks
     bool    isOperator(Client* client) const;
     bool    hasMode(IRC::ChannelMode mode) const;
-    bool    checkPassword(const std::string& pass) const;
-    bool    canModifyTopic(Client* client) const;
     bool    isInviteOnly() const;
     
     // Client Operations
@@ -66,10 +70,8 @@ private:
     bool    hasClient(Client* client) const;
     
     // Invited Client Operations
-    void    inviteClient(Client* operator_client, Client* target);
     void    addInvitedClient(Client* client);
     bool    isInvitedClient(Client* client) const;
-    void    removeInvitedClient(Client *client);
     
     // Operator Operations
     void    addOperator(Client* client);
@@ -78,7 +80,6 @@ private:
     // Communication
     void    broadcastMessage(const std::string& message, Client* exclude = NULL);
     void    sendNames(Client* client) const;
-    void    notifyModeChange(Client* changer, char mode, bool enabled, const std::string& param = "");
 
 };
 
