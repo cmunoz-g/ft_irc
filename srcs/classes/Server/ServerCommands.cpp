@@ -104,7 +104,7 @@ void Server::handleModeCommand(Message &message) {
     } else {
         std::string target = message.getParams()[0];
 
-        if (target[0] == '#') { // Handling Channel Modes
+        if (target[0] == '#' || target[0] == '&') { // Handling Channel Modes
             if (_channels.find(target) == _channels.end()) {
                 // 403 ERR_NOSUCHCHANNEL
                 response = ":" + SERVER_NAME + " 403 " + nickname + " " + target + " :No such channel\r\n";
