@@ -450,7 +450,7 @@ void Server::handlePrivmsgCommand(Message &message) {
 	std::string target = message.getParams()[0];
     std::string msg = message.getParams()[1];
 
-	if (target[0] == '#') { // Target is a channel
+	if (target[0] == '#' || target[0] == '&') { // Target is a channel
 		if (_channels.find(target) == _channels.end()) {
             // 403 ERR_NOSUCHCHANNEL
 			std::string response = ":" + SERVER_NAME + " 403 " + sender->getNickname() + " " + target + " :No such channel\r\n";
