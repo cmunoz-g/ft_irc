@@ -1,4 +1,4 @@
-# ft\_irc
+# 💬 ft\_irc
 
 Internet Relay Chat (IRC) server implemented in C++. Supports multiple clients, channel management, and standard IRC commands over TCP/IP using non-blocking sockets and a poll-based event loop.
 
