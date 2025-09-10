@@ -1,62 +1,11 @@
-# 💬 ft\_irc 💬
+# ft\_irc
 
-**Internet Relay Chat (IRC) Server**
+Internet Relay Chat (IRC) server implemented in C++. Supports multiple clients, channel management, and standard IRC commands over TCP/IP using non-blocking sockets and a poll-based event loop.
 
-A compliant IRC server implemented in C++98, capable of handling multiple simultaneous clients, channel management, and standard IRC commands over TCP/IP using non-blocking sockets and a poll-based event loop.
 
----
+## Build and run
 
-## Table of Contents
-
-* [Features](#features)
-* [Architecture](#architecture)
-* [Getting Started](#getting-started)
-
-  * [Prerequisites](#prerequisites)
-  * [Build](#build)
-  * [Run](#run)
-* [Usage](#usage)
-
-  * [Connecting with a Client](#connecting-with-a-client)
-  * [Supported Commands](#supported-commands)
-* [Code Structure](#code-structure)
-* [Authors](#authors)
-
----
-
-## Features
-
-* **Multi-client support**: Handles concurrent connections without blocking using non-blocking sockets and `poll()`.
-* **Authentication**: Clients must send a password (`PASS`), nickname (`NICK`), and username (`USER`) before joining.
-* **Channel management**: Create/join channels, set topics, keys, user limits, invite-only mode.
-* **Messaging**: Forward channel and private messages (`PRIVMSG`), support for `PING/PONG` keep-alive.
-* **Operator commands**: Channel operators can `KICK`, `INVITE`, change `TOPIC`, and adjust `MODE` flags (`i`, `t`, `k`, `l`, `o`).
-* **Capability negotiation**: Basic support for CAP subcommands (`LS`, `REQ`, `END`).
-* **Graceful shutdown**: Handles `QUIT` commands and cleans up client state.
-
-## Architecture
-
-The server follows an event-driven design:
-
-1. **Server Socket**: A single listening socket is created, set non-blocking, and registered with `poll()`.
-2. **Event Loop**: `poll()` monitors the listening socket and all client sockets for input events.
-3. **Connection Handling**: New connections are `accept()`ed, their sockets set non-blocking, and added to the poll set.
-4. **Message Processing**:
-
-   * Data is read into per-client buffers until complete commands (`\r\n`) are assembled.
-   * The `Message` class parses raw input into commands and parameters.
-   * Commands are dispatched to handler methods in `Server`.
-5. **Client Management**: Each `Client` object tracks its socket, registration state, buffer, modes, and channel subscriptions.
-6. **Channel Management**: `Channel` objects maintain member lists, operators, modes, topics, keys, and invited clients.
-
-## Getting Started
-
-### Prerequisites
-
-* A C++98-compatible compiler (e.g., `g++`).
-* POSIX environment (Linux, macOS).
-
-### Build
+Requires a C++ compiler (e.g., `g++`) and a POSIX environment (Linux, macOS).
 
 ```bash
 git clone https://github.com/cmunoz-g/ft_irc.git
@@ -66,20 +15,17 @@ make
 
 This produces the `ircserv` executable.
 
-### Run
-
 ```bash
 ./ircserv <port> <password>
 ```
 
-* `<port>`: TCP port for the server to listen on.
-* `<password>`: Connection password required by clients.
+* `<port>`: TCP port to listen on.
+* `<password>`: Connection password required from clients.
+
 
 ## Usage
 
-### Connecting with a Client
-
-ft_irc was developed using irssi as the client for testing, but you can use any standard IRC client, as well as Netcat, to connect:
+Connect using any IRC client or Netcat:
 
 ```bash
 irssi --connect=127.0.0.1 --port=6667 --password=secret
@@ -87,7 +33,7 @@ irssi --connect=127.0.0.1 --port=6667 --password=secret
 nc -C 127.0.0.1 6667
 ```
 
-### Supported Commands
+### Supported commands
 
 | Command   | Description                                        |
 | --------- | -------------------------------------------------- |
@@ -104,20 +50,42 @@ nc -C 127.0.0.1 6667
 | `INVITE`  | Invite a user to an invite-only channel            |
 | `QUIT`    | Disconnect from the server                         |
 
-## Code Structure
 
-* **main.cpp**: Sets up signal handlers, parses arguments, and starts the server.
-* **Server.hpp / Server.cpp**: Core event loop, socket setup, connection dispatching, command routing.
-* **ServerConnection.cpp**: Socket creation, `accept()`, non-blocking configuration, client removal.
-* **ServerCommands.cpp**: Handlers for each IRC command.
-* **ServerUtils.cpp**: Utility functions (broadcast, nickname uniqueness, registration flow).
-* **signal.cpp**: Handles termination signals (`SIGINT`, `SIGTERM`) to gracefully stop the server by updating the global running flag.
-* **utils.cpp**: General-purpose utilities: error logging/throwing, string-to-int conversion, and validation for modes and nicknames.
-* **Client.cpp**: Tracks client state, buffers, modes, channel subscriptions, message sending.
-* **Channel.cpp**: Manages channel state: members, operators, modes, topics, invites.
-* **Message.cpp**: Parses raw input into commands and parameters; maps to enum types.
+## Features
 
----
+* **Multi-client support:** Concurrent connections handled with non-blocking sockets and `poll()`.
+* **Authentication:** Clients must send `PASS`, `NICK`, and `USER` before joining.
+* **Channels:** Create/join channels, set topics, keys, user limits, and invite-only mode.
+* **Messaging:** Forward private and channel messages. Supports `PING/PONG`.
+* **Operators:** Channel operators can `KICK`, `INVITE`, set `TOPIC`, and change `MODE` flags (`i`, `t`, `k`, `l`, `o`).
+* **Capabilities:** Basic `CAP` subcommands (`LS`, `REQ`, `END`).
+* **Shutdown:** Handles `QUIT` cleanly and frees client resources.
 
-Happy chatting!
+
+## Implementation details
+
+The server follows an event-driven model:
+
+1. **Server socket:** A single listening socket is created, set non-blocking, and registered with `poll()`.
+2. **Event loop:** `poll()` monitors listening and client sockets for input.
+3. **Connections:** New sockets accepted, set non-blocking, and tracked.
+4. **Message parsing:** Input is buffered until complete commands (`\r\n`) are received, then parsed by `Message`.
+5. **Command dispatch:** Commands routed to handler methods in `Server`.
+6. **Clients:** Each `Client` tracks its socket, state, buffer, modes, and channels.
+7. **Channels:** `Channel` manages members, operators, modes, topics, and invitations.
+
+
+## Code structure
+
+* **main.cpp**: Entry point, signal setup, argument parsing, server start.
+* **Server.hpp / Server.cpp**: Core event loop, connection handling, command routing.
+* **ServerConnection.cpp**: Socket setup, `accept()`, non-blocking configuration, client removal.
+* **ServerCommands.cpp**: IRC command handlers.
+* **ServerUtils.cpp**: Utilities for broadcasting, nickname checks, registration.
+* **signal.cpp**: Signal handling for clean shutdown.
+* **utils.cpp**: Logging, error handling, string conversion, mode validation.
+* **Client.cpp**: Client state, buffers, modes, and channel tracking.
+* **Channel.cpp**: Channel state: members, operators, modes, topics, invites.
+* **Message.cpp**: Command parsing and mapping to enums.
+
 
